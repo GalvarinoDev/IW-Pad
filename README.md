@@ -64,7 +64,21 @@ If the folder has `iw4x-sp.exe` or `iw5-mod.exe`, the launcher starts that file 
 
 ## Default controls
 
-A jump · B crouch/prone · X use/reload · Y next weapon · LB special grenade · RB frag grenade · LT aim · RT fire · L3 sprint/hold breath · R3 melee · D-pad action slots 1-4 · Back objectives · Start pause
+| Button | Action |
+|---|---|
+| A | Jump |
+| B | Crouch / prone |
+| X | Use / reload |
+| Y | Next weapon |
+| LB | Special grenade |
+| RB | Frag grenade |
+| LT | Aim down sights |
+| RT | Fire |
+| L3 | Sprint / hold breath |
+| R3 | Melee |
+| D-pad | Action slots 1 to 4 |
+| Back | Objectives / scores |
+| Start | Pause menu |
 
 IW-Pad applies these binds one time, only if no controller button has a bind.
 The game then saves the binds to `config.cfg`. If you change a bind, the game keeps your change.
