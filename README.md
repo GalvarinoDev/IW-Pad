@@ -34,7 +34,7 @@ If the build is not supported, the DLL writes a message to `iw-pad.log` and does
 
 | Version | MW2 | MW3 |
 |---|---|---|
-| x64 (Steam) | ✅ Works | ⬜ Not tested |
+| x64 (Steam) | ✅ Works | ✅ Works |
 | x86 (32-bit) | ✅ Works | ✅ Works |
 
 > [!WARNING]
