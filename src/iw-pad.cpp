@@ -365,8 +365,7 @@ void stick(SHORT sx, SHORT sy, float dz, float& ox, float& oy) {
 // PlayStation pads under Proton without Steam Input show up only as generic joysticks, not XInput. Read
 // those through WinMM with the DualSense / DualShock 4 HID layout: X Y = left stick, Z Rz = right stick,
 // WinMM U V = R2 L2 (tested on a DualSense, 2026-10-05), buttons Square Cross Circle Triangle L1 R1 L2 R2 Create
-// Options L3 R3, POV = d-pad. 32-bit builds only.
-#ifndef _WIN64
+// Options L3 R3, POV = d-pad.
 bool winmm_state(XINPUT_STATE& st, bool scan) {
   static UINT joy = 0;
   JOYINFOEX ji{sizeof ji, JOY_RETURNALL | JOY_RETURNPOVCTS};
@@ -399,7 +398,6 @@ bool winmm_state(XINPUT_STATE& st, bool scan) {
   }
   return true;
 }
-#endif
 
 void poll_pad() {
   // Use the first slot with a pad: under Proton, Steam Input's virtual pad isn't always slot 0. Empty slots
@@ -413,9 +411,7 @@ void poll_pad() {
     for (DWORD i = 0; xinput_get_state && i < XUSER_MAX_COUNT && !pad.connected; i++)
       if (i != slot && xinput_get_state(i, &st) == ERROR_SUCCESS) { slot = i; pad.connected = true; logmsg("pad in slot %lu", i); }
   }
-#ifndef _WIN64
   if (!pad.connected) pad.connected = winmm_state(st, scan);
-#endif
   if (scan && !pad.connected) {
     static bool told;
     if (!told) { told = true; logmsg("no XInput pad in any slot or WinMM joystick"); }
