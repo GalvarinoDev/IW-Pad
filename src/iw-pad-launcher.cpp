@@ -20,10 +20,11 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
   std::wstring exe = dir + L"iw4sp.exe", dll = dir + L"iw-pad.dll", mode;
   // 32-bit installs: prefer AlterWare's client (iw4x-sp / iw5-mod), which hosts the game exe in its own process.
   // They pick the game mode from the command line (iw5-mod otherwise shows its launcher or starts MP).
-  if (exists(L"iw4x-sp.exe")) {
+  // Both are 32-bit, so only the x86 launcher can inject into them.
+  if (sizeof(void*) == 4 && exists(L"iw4x-sp.exe")) {
     exe = dir + L"iw4x-sp.exe";
     mode = L" -singleplayer";
-  } else if (exists(L"iw5-mod.exe")) {
+  } else if (sizeof(void*) == 4 && exists(L"iw5-mod.exe")) {
     exe = dir + L"iw5-mod.exe";
     mode = L" -singleplayer";
   } else if (!exists(L"iw4sp.exe")) {
