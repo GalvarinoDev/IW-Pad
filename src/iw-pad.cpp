@@ -243,7 +243,8 @@ constexpr Game kGames[] = {
 };
 const Game* g;
 
-constexpr int K_ENTER = 13, K_ESCAPE = 27, K_UP = 154, K_DOWN = 155, K_LEFT = 156, K_RIGHT = 157, K_AUX1 = 207;
+constexpr int K_ENTER = 13, K_ESCAPE = 27, K_UP = 154, K_DOWN = 155, K_LEFT = 156, K_RIGHT = 157, K_MOUSE1 = 200,
+  K_MOUSE2 = 201, K_AUX1 = 207;
 constexpr int KEYCATCH_CONSOLE = 0x1, KEYCATCH_UI = 0x10;
 constexpr int CMD_BUTTON_ADS = 0x800, AIM_TARGET_INVALID = 0x7ff;
 
@@ -466,8 +467,12 @@ int menu_key(int b) {
   }
 }
 
+// Triggers send the mouse buttons: PC scripts read them raw (MW2 _climb.gsc: buttonpressed("mouse1"/"mouse2")
+// for the icepicks), so they fire the mouse binds. AUX7/AUX8 stay bound only so hints show LT/RT.
 int game_key(int b) {
   if (b == START) return K_ESCAPE;
+  if (b == LT) return K_MOUSE2;
+  if (b == RT) return K_MOUSE1;
   if (b <= BACK) return K_AUX1 + b;
   return 0;  // left stick directions move the player instead
 }
@@ -821,6 +826,15 @@ void hk_Com_EventLoop() {
   }
   poll_pad();
   if (pad.connected) ensure_binds();
+  // Console-style use: with a pad, +usereload has to be held to pick up/use (a tap reloads).
+  // PC default g_useholdtime is 0, so a press uses at once. Also applies to keyboard use while a pad is connected.
+  static int useHold = -1;
+  if (int want = pad.connected ? 250 : 0; want != useHold) {
+    useHold = want;
+    char cmd[40];
+    snprintf(cmd, sizeof cmd, "set g_useholdtime %d\n", want);
+    at<Cbuf_AddText_t>(g->cbuf)(0, cmd);
+  }
   update_buttons();
   at<Com_EventLoop_t>(g->eventLoop)();
 }
