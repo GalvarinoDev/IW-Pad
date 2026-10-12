@@ -1,0 +1,2808 @@
+{
+    menuDef
+    {
+        name                        "pausedmenu"
+        rect                        0 0 640 480 4 4
+        focuscolor                  1 1 1 1
+        fadeClamp                   1
+        fadeCycle                   1
+        fadeAmount                  0.1
+        allowedBinding              "pause"
+        onOpen
+        {
+            setdvar iwpad_page 0;
+            showMenu pausedbkgnd showMenu objectiveinfo showMenu overheadmap;
+            setLocalVarInt ui_ingame 1;
+            focusfirst;
+        }
+        onClose
+        {
+            hideMenu pausedbkgnd hideMenu objectiveinfo hideMenu overheadmap;
+        }
+        onESC
+        {
+            close pausedmenu;
+        }
+        itemDef
+        {
+            name                        "pausedMsg"
+            text                        "@MENU_PAUSED_CAP"
+            rect                        -160 13 160 40 10 8
+            decoration                  
+            visible                     when((!dvarbool(coop)) && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textscale                   0.5
+            textfont                    9
+            exp rect y                  13 + ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 24;
+        }
+        itemDef
+        {
+            name                        "resumegame"
+            text                        "@MENU_RESUME_CREDITS"
+            group                       "paused_buttons"
+            rect                        -200 48 336 20 10 8
+            style                       1
+            type                        1
+            visible                     when(((dvarstring(mapname) == "ending" && ((dvarstring(ui_char_museum_mode) == "credits_2") || (dvarstring(ui_char_museum_mode) == "credits_black")))) && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                if (dvarstring(gameMode) != "mp")
+                {
+                    setItemColor mw2_button backcolor 0 0 0 0;
+                }
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+                setLocalVarFloat ui_popupYPos getfocuseditemy();
+                play mouse_over;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarString ui_hint_text "@NULL_EMPTY";
+                setLocalVarBool ui_menuAButton 0;
+                setItemColor paused_buttons backcolor 0 0 0 "0.0";
+            }
+            action
+            {
+                play mouse_click;
+                play mouse_click;
+                close pausedmenu;
+            }
+            exp rect y                  (28 + 1 * 20) + ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 24;
+        }
+        itemDef
+        {
+            name                        "resumegame"
+            text                        "@MENU_RESUMEGAME"
+            group                       "paused_buttons"
+            rect                        -200 48 336 20 10 8
+            style                       1
+            type                        1
+            visible                     when((!(dvarstring(mapname) == "ending" && ((dvarstring(ui_char_museum_mode) == "credits_2") || (dvarstring(ui_char_museum_mode) == "credits_black")))) && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                if (dvarstring(gameMode) != "mp")
+                {
+                    setItemColor mw2_button backcolor 0 0 0 0;
+                }
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+                setLocalVarFloat ui_popupYPos getfocuseditemy();
+                play mouse_over;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarString ui_hint_text "@NULL_EMPTY";
+                setLocalVarBool ui_menuAButton 0;
+                setItemColor paused_buttons backcolor 0 0 0 "0.0";
+            }
+            action
+            {
+                play mouse_click;
+                play mouse_click;
+                close pausedmenu;
+            }
+            exp rect y                  (28 + 1 * 20) + ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 24;
+        }
+        itemDef
+        {
+            name                        "credits_quit"
+            text                        "@PLATFORM_QUIT"
+            group                       "paused_buttons"
+            rect                        -200 68 336 20 10 8
+            style                       1
+            type                        1
+            visible                     when(((dvarstring(mapname) == "ending" && ((dvarstring(ui_char_museum_mode) == "credits_2") || (dvarstring(ui_char_museum_mode) == "credits_black")))) && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                if (dvarstring(gameMode) != "mp")
+                {
+                    setItemColor mw2_button backcolor 0 0 0 0;
+                }
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+                setLocalVarFloat ui_popupYPos getfocuseditemy();
+                play mouse_over;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarString ui_hint_text "@NULL_EMPTY";
+                setLocalVarBool ui_menuAButton 0;
+                setItemColor paused_buttons backcolor 0 0 0 "0.0";
+            }
+            action
+            {
+                play mouse_click;
+                play mouse_click;
+                setdvar credits_active 0;
+                close pausedmenu;
+                exec disconnect;
+            }
+            exp rect y                  (28 + 2 * 20) + ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 24;
+        }
+        itemDef
+        {
+            text                        "@MENU_OPTIONS"
+            group                       "paused_buttons"
+            rect                        -200 68 336 20 10 8
+            style                       1
+            type                        1
+            visible                     when((!(dvarstring(mapname) == "ending" && ((dvarstring(ui_char_museum_mode) == "credits_2") || (dvarstring(ui_char_museum_mode) == "credits_black")))) && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                if (dvarstring(gameMode) != "mp")
+                {
+                    setItemColor mw2_button backcolor 0 0 0 0;
+                }
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+                setLocalVarFloat ui_popupYPos getfocuseditemy();
+                play mouse_over;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarString ui_hint_text "@NULL_EMPTY";
+                setLocalVarBool ui_menuAButton 0;
+                setItemColor paused_buttons backcolor 0 0 0 "0.0";
+            }
+            action
+            {
+                play mouse_click;
+                play mouse_click;
+                execnow "set ui_allow_graphic_change 1";
+                open pc_options_video;
+                close pausedmenu;
+            }
+            exp rect y                  (28 + 2 * 20) + ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 24;
+        }
+        itemDef
+        {
+            name                        "difficulty_locked"
+            text                        "@MENU_LOWER_DIFFICULTY"
+            group                       "paused_buttons"
+            rect                        -200 88 336 20 10 8
+            style                       1
+            decoration                  
+            type                        1
+            visible                     when((!(dvarstring(mapname) == "ending" && ((dvarstring(ui_char_museum_mode) == "credits_2") || (dvarstring(ui_char_museum_mode) == "credits_black"))) && ((dvarint(g_gameskill) == 0) || (dvarstring(mapname) == "trainer")) && !((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free"))) && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textstyle                   3
+            textfont                    3
+            forecolor                   0.5 0.5 0.5 1
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                if (dvarstring(gameMode) != "mp")
+                {
+                    setItemColor mw2_button backcolor 0 0 0 0;
+                }
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+                setLocalVarFloat ui_popupYPos getfocuseditemy();
+                play mouse_over;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarString ui_hint_text "@NULL_EMPTY";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+            }
+            exp rect y                  (28 + 3 * 20) + ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 24;
+        }
+        itemDef
+        {
+            name                        "difficulty"
+            text                        "@MENU_LOWER_DIFFICULTY"
+            group                       "paused_buttons"
+            rect                        -200 88 336 20 10 8
+            style                       1
+            type                        1
+            visible                     when((!(dvarstring(mapname) == "ending" && ((dvarstring(ui_char_museum_mode) == "credits_2") || (dvarstring(ui_char_museum_mode) == "credits_black"))) && (dvarint(g_gameskill) > 0) && (dvarstring(mapname) != "trainer") && !((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free"))) && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                if (dvarstring(gameMode) != "mp")
+                {
+                    setItemColor mw2_button backcolor 0 0 0 0;
+                }
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+                setLocalVarFloat ui_popupYPos getfocuseditemy();
+                play mouse_over;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarString ui_hint_text "@NULL_EMPTY";
+                setLocalVarBool ui_menuAButton 0;
+                setItemColor paused_buttons backcolor 0 0 0 "0.0";
+            }
+            action
+            {
+                play mouse_click;
+                play mouse_click;
+                open ingame_difficulty;
+            }
+            exp rect y                  (28 + 3 * 20) + ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 24;
+        }
+        itemDef
+        {
+            name                        "last_checkpoint"
+            text                        "@MENU_LAST_CHECKPOINT"
+            group                       "paused_buttons"
+            rect                        -200 108 336 20 10 8
+            style                       1
+            type                        1
+            visible                     when((!(dvarstring(mapname) == "ending" && ((dvarstring(ui_char_museum_mode) == "credits_2") || (dvarstring(ui_char_museum_mode) == "credits_black"))) && (!dvarbool(arcademode) && !dvarbool(coop) && !(dvarbool(specialops))) && !((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free"))) && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                if (dvarstring(gameMode) != "mp")
+                {
+                    setItemColor mw2_button backcolor 0 0 0 0;
+                }
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+                setLocalVarFloat ui_popupYPos getfocuseditemy();
+                play mouse_over;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarString ui_hint_text "@NULL_EMPTY";
+                setLocalVarBool ui_menuAButton 0;
+                setItemColor paused_buttons backcolor 0 0 0 "0.0";
+            }
+            action
+            {
+                play mouse_click;
+                open last_checkpoint_warning;
+                close pausedmenu;
+            }
+            exp rect y                  (28 + 4 * 20) + ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 24;
+        }
+        itemDef
+        {
+            name                        "last_checkpoint_locked"
+            text                        "@MENU_LAST_CHECKPOINT"
+            group                       "paused_buttons"
+            rect                        -200 108 336 20 10 8
+            style                       1
+            decoration                  
+            type                        1
+            visible                     when((!(dvarstring(mapname) == "ending" && ((dvarstring(ui_char_museum_mode) == "credits_2") || (dvarstring(ui_char_museum_mode) == "credits_black"))) && !(!dvarbool(arcademode) && !dvarbool(coop) && !(dvarbool(specialops))) && !((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free"))) && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textstyle                   3
+            textfont                    3
+            forecolor                   0.5 0.5 0.5 1
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                if (dvarstring(gameMode) != "mp")
+                {
+                    setItemColor mw2_button backcolor 0 0 0 0;
+                }
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+                setLocalVarFloat ui_popupYPos getfocuseditemy();
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarString ui_hint_text "@NULL_EMPTY";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+            }
+            exp rect y                  (28 + 4 * 20) + ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 24;
+        }
+        itemDef
+        {
+            name                        "restartlevel"
+            text                        "@MENU_RESTART_MISSION"
+            group                       "paused_buttons"
+            rect                        -200 128 336 20 10 8
+            style                       1
+            type                        1
+            visible                     when((!(dvarstring(mapname) == "ending" && ((dvarstring(ui_char_museum_mode) == "credits_2") || (dvarstring(ui_char_museum_mode) == "credits_black")))) && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                if (dvarstring(gameMode) != "mp")
+                {
+                    setItemColor mw2_button backcolor 0 0 0 0;
+                }
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+                setLocalVarFloat ui_popupYPos getfocuseditemy();
+                play mouse_over;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarString ui_hint_text "@NULL_EMPTY";
+                setLocalVarBool ui_menuAButton 0;
+                setItemColor paused_buttons backcolor 0 0 0 "0.0";
+            }
+            action
+            {
+                play mouse_click;
+                play mouse_click;
+                close pausedmenu;
+                open restart_warning;
+            }
+            exp rect y                  (28 + 5 * 20) - ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 16;
+        }
+        itemDef
+        {
+            name                        "saveandquit"
+            text                        "@PLATFORM_SAVE_AND_QUIT"
+            group                       "paused_buttons"
+            rect                        -200 148 336 20 10 8
+            style                       1
+            type                        1
+            visible                     when((!(dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free") && !(dvarstring(mapname) == "ending" && ((dvarstring(ui_char_museum_mode) == "credits_2") || (dvarstring(ui_char_museum_mode) == "credits_black"))) && (!dvarbool(arcademode) && !dvarbool(coop) && !(dvarbool(specialops))) && savegameavailable()) && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                if (dvarstring(gameMode) != "mp")
+                {
+                    setItemColor mw2_button backcolor 0 0 0 0;
+                }
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+                setLocalVarFloat ui_popupYPos getfocuseditemy();
+                play mouse_over;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarString ui_hint_text "@NULL_EMPTY";
+                setLocalVarBool ui_menuAButton 0;
+                setItemColor paused_buttons backcolor 0 0 0 "0.0";
+            }
+            action
+            {
+                play mouse_click;
+                play mouse_click;
+                close pausedmenu;
+                open savegame_warning;
+            }
+            exp rect y                  (28 + 6 * 20) - ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 16;
+        }
+        itemDef
+        {
+            name                        "arcade_quit"
+            text                        "@PLATFORM_QUIT"
+            group                       "paused_buttons"
+            rect                        -200 148 336 20 10 8
+            style                       1
+            type                        1
+            visible                     when((!(dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free") && !(!dvarbool(arcademode) && !dvarbool(coop) && !(dvarbool(specialops)))) && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                if (dvarstring(gameMode) != "mp")
+                {
+                    setItemColor mw2_button backcolor 0 0 0 0;
+                }
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+                setLocalVarFloat ui_popupYPos getfocuseditemy();
+                play mouse_over;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarString ui_hint_text "@NULL_EMPTY";
+                setLocalVarBool ui_menuAButton 0;
+                setItemColor paused_buttons backcolor 0 0 0 "0.0";
+            }
+            action
+            {
+                play mouse_click;
+                play mouse_click;
+                close pausedmenu;
+                open savegame_warning_arcade;
+            }
+            exp rect y                  (28 + 6 * 20) - ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 16;
+        }
+        itemDef
+        {
+            name                        "quit"
+            text                        "@PLATFORM_QUIT"
+            group                       "paused_buttons"
+            rect                        -200 148 336 20 10 8
+            style                       1
+            type                        1
+            visible                     when(((dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free") || (!(dvarstring(mapname) == "ending" && ((dvarstring(ui_char_museum_mode) == "credits_2") || (dvarstring(ui_char_museum_mode) == "credits_black"))) && (!dvarbool(arcademode) && !dvarbool(coop) && !(dvarbool(specialops))) && !savegameavailable())) && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                if (dvarstring(gameMode) != "mp")
+                {
+                    setItemColor mw2_button backcolor 0 0 0 0;
+                }
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+                setLocalVarFloat ui_popupYPos getfocuseditemy();
+                play mouse_over;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarString ui_hint_text "@NULL_EMPTY";
+                setLocalVarBool ui_menuAButton 0;
+                setItemColor paused_buttons backcolor 0 0 0 "0.0";
+            }
+            action
+            {
+                play mouse_click;
+                play mouse_click;
+                close pausedmenu;
+                open savegame_warning_noprofile;
+            }
+            exp rect y                  (28 + 6 * 20) - ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 16;
+        }
+        itemDef
+        {
+            name                        "skip_airport"
+            text                        "@MENU_SP_SKIP_MISSION"
+            group                       "paused_buttons"
+            rect                        -200 168 336 20 10 8
+            style                       1
+            type                        1
+            visible                     when((dvarstring(mapname) == "airport") && dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                if (dvarstring(gameMode) != "mp")
+                {
+                    setItemColor mw2_button backcolor 0 0 0 0;
+                }
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+                setLocalVarFloat ui_popupYPos getfocuseditemy();
+                play mouse_over;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarString ui_hint_text "@NULL_EMPTY";
+                setLocalVarBool ui_menuAButton 0;
+                setItemColor paused_buttons backcolor 0 0 0 "0.0";
+            }
+            action
+            {
+                play mouse_click;
+                play mouse_click;
+                close pausedmenu;
+                open offensive_skip_popup_confirm;
+            }
+            exp rect y                  (28 + 7 * 20) - ((dvarbool(specialops)) || (dvarstring(mapname) == "ending" && dvarstring(ui_char_museum_mode) == "free")) * 16;
+        }
+        itemDef
+        {
+            name                        "iwpad_open"
+            text                        "IW-Pad test menu"
+            group                       "paused_buttons"
+            rect                        -200 188 336 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 0);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_page 1; hideMenu objectiveinfo; hideMenu overheadmap;
+            }
+        }
+        itemDef
+        {
+            text                        "IW-PAD TEST"
+            rect                        -330 13 466 40 10 8
+            decoration
+            visible                     when(dvarint(iwpad_page) == 1);
+            textalign                   4
+            textscale                   0.5
+            textfont                    9
+        }
+        itemDef
+        {
+            name                        "iwpad_main_0"
+            text                        "Controller test spots"
+            group                       "paused_buttons"
+            rect                        -330 48 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 1);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_page 2; hideMenu objectiveinfo; hideMenu overheadmap;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_main_1"
+            text                        "Level select"
+            group                       "paused_buttons"
+            rect                        -330 68 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 1);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_page 3; hideMenu objectiveinfo; hideMenu overheadmap;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_main_2"
+            text                        "God mode on/off"
+            group                       "paused_buttons"
+            rect                        -330 88 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 1);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                exec "god";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_main_3"
+            text                        "Noclip on/off"
+            group                       "paused_buttons"
+            rect                        -330 108 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 1);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                exec "noclip";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_main_4"
+            text                        "Notarget on/off"
+            group                       "paused_buttons"
+            rect                        -330 128 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 1);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                exec "notarget";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_main_5"
+            text                        "Infinite ammo on/off"
+            group                       "paused_buttons"
+            rect                        -330 148 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 1);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                exec "toggle player_sustainAmmo 0 1";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_main_6"
+            text                        "Slow motion on/off"
+            group                       "paused_buttons"
+            rect                        -330 168 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 1);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                exec "toggle timescale 1 0.25";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_main_7"
+            text                        "Restart section"
+            group                       "paused_buttons"
+            rect                        -330 188 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 1);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "fast_restart";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_main_8"
+            text                        "Back"
+            group                       "paused_buttons"
+            rect                        -330 208 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 1);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_page 0; showMenu objectiveinfo; showMenu overheadmap;
+            }
+        }
+        itemDef
+        {
+            text                        "CONTROLLER TEST SPOTS"
+            rect                        -330 13 466 40 10 8
+            decoration
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textscale                   0.5
+            textfont                    9
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_0"
+            text                        "Cliffhanger: ice pick climb (L2/R2)"
+            group                       "paused_buttons"
+            rect                        -330 48 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start climb; devmap cliffhanger";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_1"
+            text                        "Cliffhanger: the big jump"
+            group                       "paused_buttons"
+            rect                        -330 68 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start jump; devmap cliffhanger";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_2"
+            text                        "Cliffhanger: heartbeat sensor"
+            group                       "paused_buttons"
+            rect                        -330 88 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start clifftop; devmap cliffhanger";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_3"
+            text                        "Cliffhanger: snowmobile"
+            group                       "paused_buttons"
+            rect                        -330 108 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start snowmobile; devmap cliffhanger";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_4"
+            text                        "Team Player: Humvee turret"
+            group                       "paused_buttons"
+            rect                        -330 128 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start ride; devmap roadkill";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_5"
+            text                        "Exodus: laser designator"
+            group                       "paused_buttons"
+            rect                        -330 148 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start golf; devmap arcadia";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_6"
+            text                        "Contingency: Predator missile"
+            group                       "paused_buttons"
+            rect                        -330 168 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start ridge; devmap contingency";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_7"
+            text                        "Of Their Own Accord: Barrett"
+            group                       "paused_buttons"
+            rect                        -330 188 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start barrett; devmap dcburning";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_8"
+            text                        "Of Their Own Accord: heli minigun"
+            group                       "paused_buttons"
+            rect                        -330 208 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start heliride2; devmap dcburning";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_9"
+            text                        "Whiskey Hotel: flare"
+            group                       "paused_buttons"
+            rect                        -330 228 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start flare; devmap dc_whitehouse";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_10"
+            text                        "The Gulag: rappel"
+            group                       "paused_buttons"
+            rect                        -330 248 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start rappel; devmap gulag";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_11"
+            text                        "Loose Ends: breach"
+            group                       "paused_buttons"
+            rect                        -330 268 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start house_breach; devmap estate";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_12"
+            text                        "Enemy of My Enemy: vehicle ride"
+            group                       "paused_buttons"
+            rect                        -330 288 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start ride; devmap boneyard";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_13"
+            text                        "Just Like Old Times: rappel"
+            group                       "paused_buttons"
+            rect                        -330 308 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start rappel; devmap af_caves";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_14"
+            text                        "Endgame: boat chase"
+            group                       "paused_buttons"
+            rect                        -330 328 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start boatdrive_begin; devmap af_chase";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_15"
+            text                        "Endgame: knife fight crawl (L2/R2)"
+            group                       "paused_buttons"
+            rect                        -330 348 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start crawl; devmap ending";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_16"
+            text                        "S.S.D.D.: the Pit"
+            group                       "paused_buttons"
+            rect                        -330 368 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "set start pit; devmap trainer";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_spot_back"
+            text                        "Back"
+            group                       "paused_buttons"
+            rect                        -330 388 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 2);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_page 1; hideMenu objectiveinfo; hideMenu overheadmap;
+            }
+        }
+        itemDef
+        {
+            text                        "LEVEL SELECT"
+            rect                        -330 13 466 40 10 8
+            decoration
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textscale                   0.5
+            textfont                    9
+        }
+        itemDef
+        {
+            name                        "iwpad_level_0"
+            text                        "S.S.D.D."
+            group                       "paused_buttons"
+            rect                        -330 48 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "S.S.D.D."; setdvar iwpad_gstart "set start none; devmap trainer"; setdvar iwpad_s0 "timed_ads"; setdvar iwpad_g0 "set start timed_ads; devmap trainer"; setdvar iwpad_s1 "bullet_penetration"; setdvar iwpad_g1 "set start bullet_penetration; devmap trainer"; setdvar iwpad_s2 "frag"; setdvar iwpad_g2 "set start frag; devmap trainer"; setdvar iwpad_s3 "pit"; setdvar iwpad_g3 "set start pit; devmap trainer"; setdvar iwpad_s4 "course"; setdvar iwpad_g4 "set start course; devmap trainer"; setdvar iwpad_s5 "end"; setdvar iwpad_g5 "set start end; devmap trainer"; setdvar iwpad_s6 ""; setdvar iwpad_s7 ""; setdvar iwpad_s8 ""; setdvar iwpad_s9 ""; setdvar iwpad_s10 ""; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_1"
+            text                        "Team Player"
+            group                       "paused_buttons"
+            rect                        -330 68 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "Team Player"; setdvar iwpad_gstart "set start none; devmap roadkill"; setdvar iwpad_s0 "riverbank"; setdvar iwpad_g0 "set start riverbank; devmap roadkill"; setdvar iwpad_s1 "convoy"; setdvar iwpad_g1 "set start convoy; devmap roadkill"; setdvar iwpad_s2 "ride"; setdvar iwpad_g2 "set start ride; devmap roadkill"; setdvar iwpad_s3 "ambush"; setdvar iwpad_g3 "set start ambush; devmap roadkill"; setdvar iwpad_s4 "ride_later"; setdvar iwpad_g4 "set start ride_later; devmap roadkill"; setdvar iwpad_s5 "dismount"; setdvar iwpad_g5 "set start dismount; devmap roadkill"; setdvar iwpad_s6 "school"; setdvar iwpad_g6 "set start school; devmap roadkill"; setdvar iwpad_s7 "endfight - end"; setdvar iwpad_g7 "set start endfight; devmap roadkill"; setdvar iwpad_s8 "end"; setdvar iwpad_g8 "set start end; devmap roadkill"; setdvar iwpad_s9 ""; setdvar iwpad_s10 ""; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_2"
+            text                        "Cliffhanger"
+            group                       "paused_buttons"
+            rect                        -330 88 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "Cliffhanger"; setdvar iwpad_gstart "set start none; devmap cliffhanger"; setdvar iwpad_s0 "cave - With soap"; setdvar iwpad_g0 "set start cave; devmap cliffhanger"; setdvar iwpad_s1 "climb - Icepicks"; setdvar iwpad_g1 "set start climb; devmap cliffhanger"; setdvar iwpad_s2 "jump - Make the jump"; setdvar iwpad_g2 "set start jump; devmap cliffhanger"; setdvar iwpad_s3 "clifftop - Learn heartbeat sensor"; setdvar iwpad_g3 "set start clifftop; devmap cliffhanger"; setdvar iwpad_s4 "camp - sneak through"; setdvar iwpad_g4 "set start camp; devmap cliffhanger"; setdvar iwpad_s5 "c4 - plant it on the tanks"; setdvar iwpad_g5 "set start c4; devmap cliffhanger"; setdvar iwpad_s6 "goto_hanger - Go there"; setdvar iwpad_g6 "set start goto_hanger; devmap cliffhanger"; setdvar iwpad_s7 "hanger - Be there"; setdvar iwpad_g7 "set start hanger; devmap cliffhanger"; setdvar iwpad_s8 "satellite - Got DSM"; setdvar iwpad_g8 "set start satellite; devmap cliffhanger"; setdvar iwpad_s9 "tarmac - escape"; setdvar iwpad_g9 "set start tarmac; devmap cliffhanger"; setdvar iwpad_s10 "icepick - Watch Soap stab"; setdvar iwpad_g10 "set start icepick; devmap cliffhanger"; setdvar iwpad_s11 "snowmobile - Ride it to the finish"; setdvar iwpad_g11 "set start snowmobile; devmap cliffhanger"; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_3"
+            text                        "No Russian"
+            group                       "paused_buttons"
+            rect                        -330 108 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "No Russian"; setdvar iwpad_gstart "set start none; devmap airport"; setdvar iwpad_s0 "intro - assault the security checkpoint"; setdvar iwpad_g0 "set start intro; devmap airport"; setdvar iwpad_s1 "stairs - proceed up the escalaters"; setdvar iwpad_g1 "set start stairs; devmap airport"; setdvar iwpad_s2 "massacre - massacre the remaing civilians"; setdvar iwpad_g2 "set start massacre; devmap airport"; setdvar iwpad_s3 "gate - walk through the sea of dead bodies"; setdvar iwpad_g3 "set start gate; devmap airport"; setdvar iwpad_s4 "basement - move through the basement"; setdvar iwpad_g4 "set start basement; devmap airport"; setdvar iwpad_s5 "tarmac - assault the tarmac"; setdvar iwpad_g5 "set start tarmac; devmap airport"; setdvar iwpad_s6 "escape - escape from the airport"; setdvar iwpad_g6 "set start escape; devmap airport"; setdvar iwpad_s7 ""; setdvar iwpad_s8 ""; setdvar iwpad_s9 ""; setdvar iwpad_s10 ""; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_4"
+            text                        "Takedown"
+            group                       "paused_buttons"
+            rect                        -330 128 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "Takedown"; setdvar iwpad_gstart "set start none; devmap favela"; setdvar iwpad_s0 "street"; setdvar iwpad_g0 "set start street; devmap favela"; setdvar iwpad_s1 "chase"; setdvar iwpad_g1 "set start chase; devmap favela"; setdvar iwpad_s2 "favela"; setdvar iwpad_g2 "set start favela; devmap favela"; setdvar iwpad_s3 "torture"; setdvar iwpad_g3 "set start torture; devmap favela"; setdvar iwpad_s4 "soccer"; setdvar iwpad_g4 "set start soccer; devmap favela"; setdvar iwpad_s5 "hilltop"; setdvar iwpad_g5 "set start hilltop; devmap favela"; setdvar iwpad_s6 "trailer1"; setdvar iwpad_g6 "set start trailer1; devmap favela"; setdvar iwpad_s7 "trailer2"; setdvar iwpad_g7 "set start trailer2; devmap favela"; setdvar iwpad_s8 "trailer3"; setdvar iwpad_g8 "set start trailer3; devmap favela"; setdvar iwpad_s9 "end"; setdvar iwpad_g9 "set start end; devmap favela"; setdvar iwpad_s10 ""; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_5"
+            text                        "Wolverines!"
+            group                       "paused_buttons"
+            rect                        -330 148 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "Wolverines!"; setdvar iwpad_gstart "set start none; devmap invasion"; setdvar iwpad_s0 "humvee"; setdvar iwpad_g0 "set start humvee; devmap invasion"; setdvar iwpad_s1 "yards"; setdvar iwpad_g1 "set start yards; devmap invasion"; setdvar iwpad_s2 "bmp"; setdvar iwpad_g2 "set start bmp; devmap invasion"; setdvar iwpad_s3 "pizza"; setdvar iwpad_g3 "set start pizza; devmap invasion"; setdvar iwpad_s4 "gas_station"; setdvar iwpad_g4 "set start gas_station; devmap invasion"; setdvar iwpad_s5 "crash"; setdvar iwpad_g5 "set start crash; devmap invasion"; setdvar iwpad_s6 "nates_roof"; setdvar iwpad_g6 "set start nates_roof; devmap invasion"; setdvar iwpad_s7 "attack_diner"; setdvar iwpad_g7 "set start attack_diner; devmap invasion"; setdvar iwpad_s8 "defend_diner"; setdvar iwpad_g8 "set start defend_diner; devmap invasion"; setdvar iwpad_s9 "diner"; setdvar iwpad_g9 "set start diner; devmap invasion"; setdvar iwpad_s10 "burgertown"; setdvar iwpad_g10 "set start burgertown; devmap invasion"; setdvar iwpad_s11 "vip_escort"; setdvar iwpad_g11 "set start vip_escort; devmap invasion"; setdvar iwpad_s12 "helis"; setdvar iwpad_g12 "set start helis; devmap invasion"; setdvar iwpad_s13 "convoy"; setdvar iwpad_g13 "set start convoy; devmap invasion"; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_6"
+            text                        "The Hornet's Nest"
+            group                       "paused_buttons"
+            rect                        -330 168 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "The Hornet's Nest"; setdvar iwpad_gstart "set start none; devmap favela_escape"; setdvar iwpad_s0 "intro - map start"; setdvar iwpad_g0 "set start intro; devmap favela_escape"; setdvar iwpad_s1 "street - street after radiotower"; setdvar iwpad_g1 "set start street; devmap favela_escape"; setdvar iwpad_s2 "street_mid - street after first chopper reveal"; setdvar iwpad_g2 "set start street_mid; devmap favela_escape"; setdvar iwpad_s3 "street_vista2 - street second vista area"; setdvar iwpad_g3 "set start street_vista2; devmap favela_escape"; setdvar iwpad_s4 "market - market start"; setdvar iwpad_g4 "set start market; devmap favela_escape"; setdvar iwpad_s5 "market_evac - market evac goes wrong"; setdvar iwpad_g5 "set start market_evac; devmap favela_escape"; setdvar iwpad_s6 "market_evac_escape - friendlies climb up to rooftops"; setdvar iwpad_g6 "set start market_evac_escape; devmap favela_escape"; setdvar iwpad_s7 "roofrun - roofrun start"; setdvar iwpad_g7 "set start roofrun; devmap favela_escape"; setdvar iwpad_s8 "roofrun_bigjump - roofrun player jump"; setdvar iwpad_g8 "set start roofrun_bigjump; devmap favela_escape"; setdvar iwpad_s9 "solorun - player solo run"; setdvar iwpad_g9 "set start solorun; devmap favela_escape"; setdvar iwpad_s10 "solorun_rooftops - player solo run rooftops"; setdvar iwpad_g10 "set start solorun_rooftops; devmap favela_escape"; setdvar iwpad_s11 "solorun_chopper - player jump to chopper"; setdvar iwpad_g11 "set start solorun_chopper; devmap favela_escape"; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_7"
+            text                        "Exodus"
+            group                       "paused_buttons"
+            rect                        -330 188 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "Exodus"; setdvar iwpad_gstart "set start none; devmap arcadia"; setdvar iwpad_s0 "street"; setdvar iwpad_g0 "set start street; devmap arcadia"; setdvar iwpad_s1 "checkpoint"; setdvar iwpad_g1 "set start checkpoint; devmap arcadia"; setdvar iwpad_s2 "golf"; setdvar iwpad_g2 "set start golf; devmap arcadia"; setdvar iwpad_s3 "crash"; setdvar iwpad_g3 "set start crash; devmap arcadia"; setdvar iwpad_s4 ""; setdvar iwpad_s5 ""; setdvar iwpad_s6 ""; setdvar iwpad_s7 ""; setdvar iwpad_s8 ""; setdvar iwpad_s9 ""; setdvar iwpad_s10 ""; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_8"
+            text                        "The Only Easy Day"
+            group                       "paused_buttons"
+            rect                        -330 208 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "The Only Easy Day"; setdvar iwpad_gstart "set start none; devmap oilrig"; setdvar iwpad_s0 "underwater"; setdvar iwpad_g0 "set start underwater; devmap oilrig"; setdvar iwpad_s1 "surface"; setdvar iwpad_g1 "set start surface; devmap oilrig"; setdvar iwpad_s2 "rig"; setdvar iwpad_g2 "set start rig; devmap oilrig"; setdvar iwpad_s3 "deck1"; setdvar iwpad_g3 "set start deck1; devmap oilrig"; setdvar iwpad_s4 "heli - ambush"; setdvar iwpad_g4 "set start heli; devmap oilrig"; setdvar iwpad_s5 "deck2"; setdvar iwpad_g5 "set start deck2; devmap oilrig"; setdvar iwpad_s6 "deck3"; setdvar iwpad_g6 "set start deck3; devmap oilrig"; setdvar iwpad_s7 "escape"; setdvar iwpad_g7 "set start escape; devmap oilrig"; setdvar iwpad_s8 ""; setdvar iwpad_s9 ""; setdvar iwpad_s10 ""; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_9"
+            text                        "The Gulag"
+            group                       "paused_buttons"
+            rect                        -330 228 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "The Gulag"; setdvar iwpad_gstart "set start none; devmap gulag"; setdvar iwpad_s0 "intro"; setdvar iwpad_g0 "set start intro; devmap gulag"; setdvar iwpad_s1 "approach"; setdvar iwpad_g1 "set start approach; devmap gulag"; setdvar iwpad_s2 "f15"; setdvar iwpad_g2 "set start f15; devmap gulag"; setdvar iwpad_s3 "unload"; setdvar iwpad_g3 "set start unload; devmap gulag"; setdvar iwpad_s4 "control_room"; setdvar iwpad_g4 "set start control_room; devmap gulag"; setdvar iwpad_s5 "armory"; setdvar iwpad_g5 "set start armory; devmap gulag"; setdvar iwpad_s6 "rappel"; setdvar iwpad_g6 "set start rappel; devmap gulag"; setdvar iwpad_s7 "tunnel"; setdvar iwpad_g7 "set start tunnel; devmap gulag"; setdvar iwpad_s8 "bathroom"; setdvar iwpad_g8 "set start bathroom; devmap gulag"; setdvar iwpad_s9 "rescue"; setdvar iwpad_g9 "set start rescue; devmap gulag"; setdvar iwpad_s10 "run"; setdvar iwpad_g10 "set start run; devmap gulag"; setdvar iwpad_s11 "cafe"; setdvar iwpad_g11 "set start cafe; devmap gulag"; setdvar iwpad_s12 "evac"; setdvar iwpad_g12 "set start evac; devmap gulag"; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_10"
+            text                        "Of Their Own Accord"
+            group                       "paused_buttons"
+            rect                        -330 248 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "Of Their Own Accord"; setdvar iwpad_gstart "set start none; devmap dcburning"; setdvar iwpad_s0 "elevator_bottom"; setdvar iwpad_g0 "set start elevator_bottom; devmap dcburning"; setdvar iwpad_s1 "elevator_top"; setdvar iwpad_g1 "set start elevator_top; devmap dcburning"; setdvar iwpad_s2 "crows_nest"; setdvar iwpad_g2 "set start crows_nest; devmap dcburning"; setdvar iwpad_s3 "crows_nest_armor"; setdvar iwpad_g3 "set start crows_nest_armor; devmap dcburning"; setdvar iwpad_s4 "barrett"; setdvar iwpad_g4 "set start barrett; devmap dcburning"; setdvar iwpad_s5 "to_roof"; setdvar iwpad_g5 "set start to_roof; devmap dcburning"; setdvar iwpad_s6 "roof"; setdvar iwpad_g6 "set start roof; devmap dcburning"; setdvar iwpad_s7 "heliride2"; setdvar iwpad_g7 "set start heliride2; devmap dcburning"; setdvar iwpad_s8 "crash"; setdvar iwpad_g8 "set start crash; devmap dcburning"; setdvar iwpad_s9 ""; setdvar iwpad_s10 ""; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_11"
+            text                        "Contingency"
+            group                       "paused_buttons"
+            rect                        -330 268 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "Contingency"; setdvar iwpad_gstart "set start none; devmap contingency"; setdvar iwpad_s0 "start"; setdvar iwpad_g0 "set start start; devmap contingency"; setdvar iwpad_s1 "slide"; setdvar iwpad_g1 "set start slide; devmap contingency"; setdvar iwpad_s2 "woods"; setdvar iwpad_g2 "set start woods; devmap contingency"; setdvar iwpad_s3 "midwoods - mid woods"; setdvar iwpad_g3 "set start midwoods; devmap contingency"; setdvar iwpad_s4 "ridge"; setdvar iwpad_g4 "set start ridge; devmap contingency"; setdvar iwpad_s5 "base"; setdvar iwpad_g5 "set start base; devmap contingency"; setdvar iwpad_s6 "defend_sub"; setdvar iwpad_g6 "set start defend_sub; devmap contingency"; setdvar iwpad_s7 ""; setdvar iwpad_s8 ""; setdvar iwpad_s9 ""; setdvar iwpad_s10 ""; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_12"
+            text                        "Second Sun"
+            group                       "paused_buttons"
+            rect                        -330 288 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "Second Sun"; setdvar iwpad_gstart "set start none; devmap dcemp"; setdvar iwpad_s0 "intro - play end of dc burning"; setdvar iwpad_g0 "set start intro; devmap dcemp"; setdvar iwpad_s1 "iss - see the emp up close and personal"; setdvar iwpad_g1 "set start iss; devmap dcemp"; setdvar iwpad_s2 "emp - see the emp effects from the ground"; setdvar iwpad_g2 "set start emp; devmap dcemp"; setdvar iwpad_s3 "street - find cover off the street"; setdvar iwpad_g3 "set start street; devmap dcemp"; setdvar iwpad_s4 "corner - watch the plane crash"; setdvar iwpad_g4 "set start corner; devmap dcemp"; setdvar iwpad_s5 "meetup - meetup with some allies"; setdvar iwpad_g5 "set start meetup; devmap dcemp"; setdvar iwpad_s6 "lobby - sneak through the lobby"; setdvar iwpad_g6 "set start lobby; devmap dcemp"; setdvar iwpad_s7 "office - fight through the office"; setdvar iwpad_g7 "set start office; devmap dcemp"; setdvar iwpad_s8 "parking - traverse the parking deck"; setdvar iwpad_g8 "set start parking; devmap dcemp"; setdvar iwpad_s9 "plaza - continue through the plaza"; setdvar iwpad_g9 "set start plaza; devmap dcemp"; setdvar iwpad_s10 "tunnels - traverse the tunnels"; setdvar iwpad_g10 "set start tunnels; devmap dcemp"; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_13"
+            text                        "Whiskey Hotel"
+            group                       "paused_buttons"
+            rect                        -330 308 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "Whiskey Hotel"; setdvar iwpad_gstart "set start none; devmap dc_whitehouse"; setdvar iwpad_s0 "tunnels - make you way to WH"; setdvar iwpad_g0 "set start tunnels; devmap dc_whitehouse"; setdvar iwpad_s1 "flare - pop the flare"; setdvar iwpad_g1 "set start flare; devmap dc_whitehouse"; setdvar iwpad_s2 ""; setdvar iwpad_s3 ""; setdvar iwpad_s4 ""; setdvar iwpad_s5 ""; setdvar iwpad_s6 ""; setdvar iwpad_s7 ""; setdvar iwpad_s8 ""; setdvar iwpad_s9 ""; setdvar iwpad_s10 ""; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_14"
+            text                        "Loose Ends"
+            group                       "paused_buttons"
+            rect                        -330 328 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "Loose Ends"; setdvar iwpad_gstart "set start none; devmap estate"; setdvar iwpad_s0 "intro"; setdvar iwpad_g0 "set start intro; devmap estate"; setdvar iwpad_s1 "ambush"; setdvar iwpad_g1 "set start ambush; devmap estate"; setdvar iwpad_s2 "forest_fight"; setdvar iwpad_g2 "set start forest_fight; devmap estate"; setdvar iwpad_s3 "house_approach"; setdvar iwpad_g3 "set start house_approach; devmap estate"; setdvar iwpad_s4 "house_breach"; setdvar iwpad_g4 "set start house_breach; devmap estate"; setdvar iwpad_s5 "house_briefing"; setdvar iwpad_g5 "set start house_briefing; devmap estate"; setdvar iwpad_s6 "house_defense"; setdvar iwpad_g6 "set start house_defense; devmap estate"; setdvar iwpad_s7 "escape - Escape to LZ"; setdvar iwpad_g7 "set start escape; devmap estate"; setdvar iwpad_s8 "ending - Ending Sequence"; setdvar iwpad_g8 "set start ending; devmap estate"; setdvar iwpad_s9 ""; setdvar iwpad_s10 ""; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_15"
+            text                        "The Enemy of My Enemy"
+            group                       "paused_buttons"
+            rect                        -330 348 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "The Enemy of My Enemy"; setdvar iwpad_gstart "set start none; devmap boneyard"; setdvar iwpad_s0 "intro"; setdvar iwpad_g0 "set start intro; devmap boneyard"; setdvar iwpad_s1 "road"; setdvar iwpad_g1 "set start road; devmap boneyard"; setdvar iwpad_s2 "flyby"; setdvar iwpad_g2 "set start flyby; devmap boneyard"; setdvar iwpad_s3 "higround"; setdvar iwpad_g3 "set start higround; devmap boneyard"; setdvar iwpad_s4 "ride"; setdvar iwpad_g4 "set start ride; devmap boneyard"; setdvar iwpad_s5 "ride_end"; setdvar iwpad_g5 "set start ride_end; devmap boneyard"; setdvar iwpad_s6 ""; setdvar iwpad_s7 ""; setdvar iwpad_s8 ""; setdvar iwpad_s9 ""; setdvar iwpad_s10 ""; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_16"
+            text                        "Just Like Old Times"
+            group                       "paused_buttons"
+            rect                        -330 368 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "Just Like Old Times"; setdvar iwpad_gstart "set start none; devmap af_caves"; setdvar iwpad_s0 "road"; setdvar iwpad_g0 "set start road; devmap af_caves"; setdvar iwpad_s1 "rappel"; setdvar iwpad_g1 "set start rappel; devmap af_caves"; setdvar iwpad_s2 "barracks - barracks (cave entrance)"; setdvar iwpad_g2 "set start barracks; devmap af_caves"; setdvar iwpad_s3 "steamroom"; setdvar iwpad_g3 "set start steamroom; devmap af_caves"; setdvar iwpad_s4 "ledge"; setdvar iwpad_g4 "set start ledge; devmap af_caves"; setdvar iwpad_s5 "overlook"; setdvar iwpad_g5 "set start overlook; devmap af_caves"; setdvar iwpad_s6 "control"; setdvar iwpad_g6 "set start control; devmap af_caves"; setdvar iwpad_s7 "airstrip"; setdvar iwpad_g7 "set start airstrip; devmap af_caves"; setdvar iwpad_s8 ""; setdvar iwpad_s9 ""; setdvar iwpad_s10 ""; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_17"
+            text                        "Endgame: boat chase"
+            group                       "paused_buttons"
+            rect                        -330 388 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "Endgame: boat chase"; setdvar iwpad_gstart "set start none; devmap af_chase"; setdvar iwpad_s0 "boatdrive_begin"; setdvar iwpad_g0 "set start boatdrive_begin; devmap af_chase"; setdvar iwpad_s1 "boatdrive_lake"; setdvar iwpad_g1 "set start boatdrive_lake; devmap af_chase"; setdvar iwpad_s2 "boatdrive_lake_mid"; setdvar iwpad_g2 "set start boatdrive_lake_mid; devmap af_chase"; setdvar iwpad_s3 "boatdrive_rapids"; setdvar iwpad_g3 "set start boatdrive_rapids; devmap af_chase"; setdvar iwpad_s4 "boatdrive_below_rapids"; setdvar iwpad_g4 "set start boatdrive_below_rapids; devmap af_chase"; setdvar iwpad_s5 "boatdrive_end"; setdvar iwpad_g5 "set start boatdrive_end; devmap af_chase"; setdvar iwpad_s6 ""; setdvar iwpad_s7 ""; setdvar iwpad_s8 ""; setdvar iwpad_s9 ""; setdvar iwpad_s10 ""; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_18"
+            text                        "Endgame: knife fight"
+            group                       "paused_buttons"
+            rect                        -330 408 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_level "Endgame: knife fight"; setdvar iwpad_gstart "set start none; devmap ending"; setdvar iwpad_s0 "wakeup"; setdvar iwpad_g0 "set start wakeup; devmap ending"; setdvar iwpad_s1 "turnbuckle"; setdvar iwpad_g1 "set start turnbuckle; devmap ending"; setdvar iwpad_s2 "gloat"; setdvar iwpad_g2 "set start gloat; devmap ending"; setdvar iwpad_s3 "gun_drop"; setdvar iwpad_g3 "set start gun_drop; devmap ending"; setdvar iwpad_s4 "crawl"; setdvar iwpad_g4 "set start crawl; devmap ending"; setdvar iwpad_s5 "gun_kick"; setdvar iwpad_g5 "set start gun_kick; devmap ending"; setdvar iwpad_s6 "wounded - Watch Price/Shep fight"; setdvar iwpad_g6 "set start wounded; devmap ending"; setdvar iwpad_s7 "pullout"; setdvar iwpad_g7 "set start pullout; devmap ending"; setdvar iwpad_s8 "kill"; setdvar iwpad_g8 "set start kill; devmap ending"; setdvar iwpad_s9 "price_wakeup"; setdvar iwpad_g9 "set start price_wakeup; devmap ending"; setdvar iwpad_s10 "walkoff"; setdvar iwpad_g10 "set start walkoff; devmap ending"; setdvar iwpad_s11 ""; setdvar iwpad_s12 ""; setdvar iwpad_s13 ""; setdvar iwpad_s14 ""; setdvar iwpad_s15 ""; setdvar iwpad_s16 ""; setdvar iwpad_s17 ""; setdvar iwpad_page 4;
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_level_back"
+            text                        "Back"
+            group                       "paused_buttons"
+            rect                        -330 428 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 3);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_page 1; hideMenu objectiveinfo; hideMenu overheadmap;
+            }
+        }
+        itemDef
+        {
+            text                        "SECTIONS"
+            rect                        -330 13 466 40 10 8
+            decoration
+            visible                     when(dvarint(iwpad_page) == 4);
+            textalign                   4
+            textscale                   0.5
+            textfont                    9
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_start"
+            exp text                    "Start of level: " + dvarstring(iwpad_level);
+            group                       "paused_buttons"
+            rect                        -330 48 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_gstart";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_0"
+            exp text                    dvarstring(iwpad_s0);
+            group                       "paused_buttons"
+            rect                        -330 68 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s0) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g0";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_1"
+            exp text                    dvarstring(iwpad_s1);
+            group                       "paused_buttons"
+            rect                        -330 88 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s1) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g1";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_2"
+            exp text                    dvarstring(iwpad_s2);
+            group                       "paused_buttons"
+            rect                        -330 108 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s2) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g2";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_3"
+            exp text                    dvarstring(iwpad_s3);
+            group                       "paused_buttons"
+            rect                        -330 128 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s3) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g3";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_4"
+            exp text                    dvarstring(iwpad_s4);
+            group                       "paused_buttons"
+            rect                        -330 148 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s4) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g4";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_5"
+            exp text                    dvarstring(iwpad_s5);
+            group                       "paused_buttons"
+            rect                        -330 168 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s5) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g5";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_6"
+            exp text                    dvarstring(iwpad_s6);
+            group                       "paused_buttons"
+            rect                        -330 188 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s6) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g6";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_7"
+            exp text                    dvarstring(iwpad_s7);
+            group                       "paused_buttons"
+            rect                        -330 208 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s7) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g7";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_8"
+            exp text                    dvarstring(iwpad_s8);
+            group                       "paused_buttons"
+            rect                        -330 228 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s8) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g8";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_9"
+            exp text                    dvarstring(iwpad_s9);
+            group                       "paused_buttons"
+            rect                        -330 248 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s9) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g9";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_10"
+            exp text                    dvarstring(iwpad_s10);
+            group                       "paused_buttons"
+            rect                        -330 268 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s10) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g10";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_11"
+            exp text                    dvarstring(iwpad_s11);
+            group                       "paused_buttons"
+            rect                        -330 288 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s11) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g11";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_12"
+            exp text                    dvarstring(iwpad_s12);
+            group                       "paused_buttons"
+            rect                        -330 308 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s12) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g12";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_13"
+            exp text                    dvarstring(iwpad_s13);
+            group                       "paused_buttons"
+            rect                        -330 328 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s13) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g13";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_14"
+            exp text                    dvarstring(iwpad_s14);
+            group                       "paused_buttons"
+            rect                        -330 348 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s14) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g14";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_15"
+            exp text                    dvarstring(iwpad_s15);
+            group                       "paused_buttons"
+            rect                        -330 368 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s15) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g15";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_16"
+            exp text                    dvarstring(iwpad_s16);
+            group                       "paused_buttons"
+            rect                        -330 388 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s16) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g16";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_17"
+            exp text                    dvarstring(iwpad_s17);
+            group                       "paused_buttons"
+            rect                        -330 408 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4 && dvarstring(iwpad_s17) != "");
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                close pausedmenu; exec "vstr iwpad_g17";
+            }
+        }
+        itemDef
+        {
+            name                        "iwpad_sec_back"
+            text                        "Back to levels"
+            group                       "paused_buttons"
+            rect                        -330 428 466 20 10 8
+            style                       1
+            type                        1
+            visible                     when(dvarint(iwpad_page) == 4);
+            textalign                   4
+            textalignx                  40
+            textscale                   0.375
+            textfont                    3
+            disablecolor                0.6 0.55 0.55 1
+            background                  "popup_button_selection_bar"
+            onFocus
+            {
+                play mouse_over;
+                setItemColor self backcolor 0 0 0 1;
+                setLocalVarBool ui_menuAButton 1;
+            }
+            leaveFocus
+            {
+                setItemColor self backcolor 0 0 0 "0.0";
+                setLocalVarBool ui_menuAButton 0;
+            }
+            action
+            {
+                play mouse_click;
+                setdvar iwpad_page 3;
+            }
+        }
+    }
+}

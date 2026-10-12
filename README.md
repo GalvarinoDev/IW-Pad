@@ -68,7 +68,7 @@ If the folder has `iw4x-sp.exe` or `iw5-mod.exe`, the launcher starts that file 
 |---|---|
 | A | Jump |
 | B | Crouch / prone |
-| X | Use / reload |
+| X | Reload (tap) / use or pick up (hold) |
 | Y | Next weapon |
 | LB | Special grenade |
 | RB | Frag grenade |
@@ -82,6 +82,7 @@ If the folder has `iw4x-sp.exe` or `iw5-mod.exe`, the launcher starts that file 
 
 IW-Pad applies these binds one time, only if no controller button has a bind.
 The game then saves the binds to `config.cfg`. If you change a bind, the game keeps your change.
+Buttons use the console names, for example `bind BUTTON_A "+gostand"` or `bind DPAD_UP "+actionslot 1"`.
 
 ## Settings
 
@@ -97,6 +98,7 @@ Set these values in the game console (`~`) or in `config.cfg`.
 | `gpad_deadzone` | `0.2` | Stick deadzone. |
 | `gpad_aim_range` | `3200` | MW3 only. Aim assist range. |
 | `gpad_autoaim_range` | `1200` | MW3 only. Auto aim range. |
+| `gpad_in_use` | | Read only. `1` while the controller was used last. Keyboard and mouse buttons set it to `0`. |
 
 ## Troubleshooting
 

@@ -168,6 +168,8 @@ struct Game {
   bool mw3Regs;                                    // x86 usercall registers: false = MW2's, true = MW3's
   uintptr_t drawText;                              // R_AddCmdDrawText, hooked to drop iw5-mod's watermark (0: none)
   int dvarValue = 0x10;                            // dvar_t current value offset (MW3 x86: 0xC)
+  uintptr_t useHoldTime = 0;                       // g_useholdtime dvar_t* slot (Player_UpdateActivate hold time)
+  uintptr_t zoneLoad = 0;                          // DB_LoadXAssets(XZoneInfo*, count, sync); 0: no iwpad zone
 };
 
 constexpr Game kGames[] = {
@@ -183,7 +185,7 @@ constexpr Game kGames[] = {
     {0x1400d0e62}, 0x1400d1880, false,
     0x1403cf180, 0x1403d0000,
     0, 0xE58, 0xE70,
-    kMw2AimDvarSlots },
+    kMw2AimDvarSlots, false, 0, 0x10, 0x140d9c050, 0x1400f0ae0 },
   { "MW3 SP x64 (iw5sp.exe)", 0x6A743A58, 0x44BE000,
     0x14007e3c3, 0x14007d9f0, {0x14023d0e7, 0x14023d453}, 0x14023ccb0,
     0x14007eaf0, 0x14022f680, 0x1402f2210, 0x14007f1e0, 0x1402c43f0, 0x1402c4650,
@@ -195,7 +197,7 @@ constexpr Game kGames[] = {
     {0x1402a36b3, 0x1402a37ca, 0x1401585aa}, 0x14007e960, true,
     0x1404d9a00, 0x1404da860,
     8, 0xE44, 0xE5C,
-    nullptr },
+    nullptr, false, 0, 0x10, 0x14114a9d0 },
 #else
   // Steam x86 build (PE 2010-02-10), the one IW4x-SP's zip ships. CL_MouseMove and
   // Key_GetCommandAssignment are usercall here, see the stubs below.
@@ -210,7 +212,7 @@ constexpr Game kGames[] = {
     {0x579e98}, 0x579c70, false,
     0x73ba90, 0x73c940,
     0, 0xE58, 0xE70,
-    kMw2AimDvarSlots },
+    kMw2AimDvarSlots, false, 0, 0x10, 0x1063afc },
   // AlterWare build (PE 2009-11-07, iw4x-sp's data/iw4sp.exe), mapped by iw4x-sp.exe into its own image.
   // Ported from the entry above by masked byte signatures (ghidra/mw2-aw.gpr); same code, other addresses.
   { "MW2 SP x86 AlterWare (iw4x-sp)", 0x4AF4BDCC, 0x2153000,
@@ -224,7 +226,7 @@ constexpr Game kGames[] = {
     {0x57c648}, 0x57c520, false,
     0x73ea90, 0x73f940,
     0, 0xE58, 0xE70,
-    kMw2AwAimDvarSlots },
+    kMw2AwAimDvarSlots, false, 0, 0x10, 0x106707c },
   // Steam x86 build (PE 0x50B8E96C). Same usercall functions as MW2 x86, other registers. The hint
   // lookup is a separate Key_GetCommandAssignment again (MW3 x64 inlines it into CL_GetKeyBinding).
   { "MW3 SP x86 (iw5sp.exe)", 0x50B8E96C, 0x2444000,
@@ -238,7 +240,7 @@ constexpr Game kGames[] = {
     {0x57e784, 0x4e533d, 0x4106a0}, 0x57e640, false,
     0x94d290, 0x94e0f8,
     8, 0xE44, 0xE5C,
-    nullptr, true, 0x51b100, 0xC },
+    nullptr, true, 0x51b100, 0xC, 0x1357a70 },
 #endif
 };
 const Game* g;
@@ -314,13 +316,14 @@ int dvi(AimDvar d, int def) { auto p = aim_dvar(d); return p ? *reinterpret_cast
 float ownf(uint8_t* p, float def) { return p ? *reinterpret_cast<float*>(p + g->dvarValue) : def; }
 bool ownb(uint8_t* p, bool def) { return p ? *(p + g->dvarValue) != 0 : def; }
 
-uint8_t *gpad_enabled, *gpad_sensitivity, *gpad_invert, *gpad_deadzone, *gpad_aim_assist, *gpad_aim_strength, *gpad_aim_range, *gpad_autoaim_range;
+uint8_t *gpad_in_use, *gpad_enabled, *gpad_sensitivity, *gpad_invert, *gpad_deadzone, *gpad_aim_assist, *gpad_aim_strength, *gpad_aim_range, *gpad_autoaim_range;
 
 void register_dvars() {
   auto rb = at<Dvar_RegisterBool_t>(g->dvarBool);
   auto rf = at<Dvar_RegisterFloat_t>(g->dvarFloat);
   constexpr unsigned ARCHIVE = 1;
   gpad_enabled = rb("gpad_enabled", true, ARCHIVE, "Enable controller input");
+  gpad_in_use = rb("gpad_in_use", false, 0, "The controller was used last (keyboard or mouse buttons clear it)");
   gpad_aim_assist = rb("gpad_aim_assist", true, ARCHIVE, "Enable controller aim assist (slowdown, lock on, auto aim)");
   gpad_invert = rb("gpad_invert", false, ARCHIVE, "Invert controller look pitch");
   gpad_sensitivity = rf("gpad_sensitivity", 1.0f, 0.1f, 5.0f, ARCHIVE, "Controller look sensitivity");
@@ -434,6 +437,14 @@ void poll_pad() {
 // In gameplay buttons send AUX keys so they go through the normal bind system;
 // in menus they send the keys Menu_HandleKey understands.
 enum Btn { A, B, X, Y, LB, RB, LT, RT, L3, R3, DUP, DDOWN, DLEFT, DRIGHT, BACK, START, LUP, LDOWN, LLEFT, LRIGHT, BTN_COUNT };
+// Console keynums (IW4x Mapping/Key.hpp) and their key names, per Btn up to START. In gameplay buttons send
+// these, so binds read "bind BUTTON_A ..." and scripts' buttonpressed("BUTTON_LTRIG") works.
+constexpr int kPadKey[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x12, 0x13, 0x10, 0x11, 0x14, 0x15, 0x16, 0x17, 0x0F, 0x0E };
+constexpr const char* kPadKeyName[] = {
+  "BUTTON_A", "BUTTON_B", "BUTTON_X", "BUTTON_Y", "BUTTON_LSHLDR", "BUTTON_RSHLDR", "BUTTON_LTRIG", "BUTTON_RTRIG",
+  "BUTTON_LSTICK", "BUTTON_RSTICK", "DPAD_UP", "DPAD_DOWN", "DPAD_LEFT", "DPAD_RIGHT", "BUTTON_BACK", "BUTTON_START",
+};
+static_assert(std::size(kPadKey) == START + 1 && std::size(kPadKeyName) == START + 1);
 constexpr const char* kDefaultBinds[] = {
   "+gostand", "+stance", "+usereload", "weapnext", "+smoke", "+frag", "+speed_throw", "+attack",
   "+breath_sprint", "+melee", "+actionslot 1", "+actionslot 2", "+actionslot 3", "+actionslot 4", "+scores",
@@ -467,13 +478,9 @@ int menu_key(int b) {
   }
 }
 
-// Triggers send the mouse buttons: PC scripts read them raw (MW2 _climb.gsc: buttonpressed("mouse1"/"mouse2")
-// for the icepicks), so they fire the mouse binds. AUX7/AUX8 stay bound only so hints show LT/RT.
 int game_key(int b) {
   if (b == START) return K_ESCAPE;
-  if (b == LT) return K_MOUSE2;
-  if (b == RT) return K_MOUSE1;
-  if (b <= BACK) return K_AUX1 + b;
+  if (b < START) return kPadKey[b];
   return 0;  // left stick directions move the player instead
 }
 
@@ -481,6 +488,9 @@ struct BtnState { int sentKey; int nextRepeat; } btn[BTN_COUNT];
 
 int now_ms() { return at<Sys_Milliseconds_t>(g->sysMilliseconds)(); }
 void send_key(int key, bool down) { at<CL_KeyEvent_t>(g->keyEvent)(0, key, down, now_ms()); }
+
+// keys[k] = { int down; int repeats; binding }: down sits 8 bytes before the binding field (all 5 builds' Key_IsDown)
+void set_key_down(int k, bool d) { *at<int*>((g->keyBindIdx ? g->keyBindIdx : g->keyBindStr) - 8 + k * g->keyStride) = d; }
 
 void update_buttons() {
   int catchers = *at<int*>(g->keyCatchers);
@@ -490,14 +500,43 @@ void update_buttons() {
     auto& s = btn[b];
     bool down = !console && ownb(gpad_enabled, true) && btn_down(b);
     int want = down ? (menu ? menu_key(b) : game_key(b)) : 0;
-    if (s.sentKey && s.sentKey != want) { send_key(s.sentKey, false); s.sentKey = 0; }
+    if (s.sentKey && s.sentKey != want) {
+      send_key(s.sentKey, false);
+      if (b == LT || b == RT) set_key_down(b == LT ? K_MOUSE1 : K_MOUSE2, false);
+      s.sentKey = 0;
+    }
     if (!want) continue;
     if (!s.sentKey) {
       send_key(want, true); s.sentKey = want; s.nextRepeat = now + 400;
+      // PC scripts read the mouse buttons raw (MW2 _climb.gsc ice picks, af_chase knife crawl: mouse1 = left
+      // arm, mouse2 = right arm), so mirror LT/RT into mouse1/mouse2 without firing the mouse binds.
+      if (b == LT || b == RT) set_key_down(b == LT ? K_MOUSE1 : K_MOUSE2, true);
     } else if (menu && (want == K_UP || want == K_DOWN || want == K_LEFT || want == K_RIGHT) && now >= s.nextRepeat) {
       send_key(want, false); send_key(want, true); s.nextRepeat = now + 120;
     }
   }
+}
+
+// "Pad in use": any pad input sets it, a keyboard key or mouse button clears it. Mouse movement doesn't,
+// since Deck gyro/trackpads arrive as mouse movement. GetKeyboardState only sees input sent to this
+// thread's window (we run on the game's main thread), so typing in other windows doesn't count.
+bool pad_in_use;
+void update_in_use() {
+  bool enabled = pad.connected && ownb(gpad_enabled, true);
+  bool padActive = enabled && (pad.buttons || pad.lt > 0.25f || pad.rt > 0.25f || pad.lx || pad.ly || pad.rx || pad.ry);
+  // only new presses count, so a key left stuck down (alt-tab, overlay) doesn't keep clearing it
+  static BYTE prev[256];
+  BYTE ks[256];
+  bool kbm = false;
+  if (GetKeyboardState(ks)) {
+    for (int vk = 1; vk < 256; vk++) kbm |= (ks[vk] & 0x80) && !(prev[vk] & 0x80) && vk != VK_PACKET;
+    memcpy(prev, ks, sizeof prev);
+  }
+  bool inUse = padActive || (pad_in_use && !kbm && enabled);
+  if (inUse == pad_in_use) return;
+  pad_in_use = inUse;
+  if (gpad_in_use) *(gpad_in_use + g->dvarValue) = inUse;
+  logmsg(inUse ? "input: controller" : "input: keyboard/mouse");
 }
 
 // keys[k] holds an index into the bind command table. MW2 also allows free-form bind strings when
@@ -508,17 +547,18 @@ const char* binding_of(int k) {
   return g->keyBindStr ? *at<const char**>(g->keyBindStr + k * g->keyStride) : nullptr;
 }
 
-// Bind AUX keys once if the player has none bound (config.cfg starts with unbindall).
-// The game then saves them to config.cfg, so player rebinds stick.
+// Bind the pad keys once if the player has none bound (config.cfg starts with unbindall).
+// The game then saves them to config.cfg, so player rebinds stick. Binds from older versions (AUX keys)
+// no longer parse and are dropped.
 bool binds_checked;
 void ensure_binds() {
   if (binds_checked) return;
   binds_checked = true;
-  for (int k = K_AUX1; k < K_AUX1 + 16; k++)
+  for (int k : kPadKey)
     if (binding_of(k)) return;
   char cmd[64];
   for (int i = 0; i < int(std::size(kDefaultBinds)); i++) {
-    snprintf(cmd, sizeof cmd, "bind AUX%d \"%s\"\n", i + 1, kDefaultBinds[i]);
+    snprintf(cmd, sizeof cmd, "bind %s \"%s\"\n", kPadKeyName[i], kDefaultBinds[i]);
     at<Cbuf_AddText_t>(g->cbuf)(0, cmd);
   }
   logmsg("default controller binds applied");
@@ -698,23 +738,38 @@ void apply_look(const Aim& aa, int buttons, float dt, float& pitch, float& yaw) 
 // falls back to the raw text when it's not a localization key.
 constexpr const char* kButtonNames[] = {
   "^2A^7", "^1B^7", "^5X^7", "^3Y^7", "LB", "RB", "LT", "RT", "L3", "R3",
-  "D-Pad Up", "D-Pad Down", "D-Pad Left", "D-Pad Right", "Back",
+  "D-Pad Up", "D-Pad Down", "D-Pad Left", "D-Pad Right", "Back", "Start",
 };
+static_assert(std::size(kButtonNames) == START + 1);
 
-void patch_key_names() {
-  auto table = at<const char**>(g->localizedKeyNames);  // { const char* name; int keynum; } x 95
+// The engine's key name table ({ const char* name; int keynum; } x 95) sits right before the localized one
+// in all 5 builds. Nothing uses its 16 AUX1-AUX16 entries, so they become the console keys: names for
+// binds/config/scripts, coloured names for hints. Key_StringToKeynum, Key_KeynumToString and Key_IsDown all
+// walk these tables, so no code needs patching.
+void rename_aux(const char** table, bool localized) {
   for (int i = 0; table[i * 2]; i++) {
-    int k = *reinterpret_cast<int*>(&table[i * 2 + 1]);
-    if (k < K_AUX1 || k >= K_AUX1 + int(std::size(kButtonNames))) continue;
+    int& k = *reinterpret_cast<int*>(&table[i * 2 + 1]);
+    if (k < K_AUX1 || k > K_AUX1 + START) continue;
+    int b = k - K_AUX1;
     DWORD old;
-    VirtualProtect(&table[i * 2], sizeof(void*), PAGE_READWRITE, &old);
-    table[i * 2] = kButtonNames[k - K_AUX1];
-    VirtualProtect(&table[i * 2], sizeof(void*), old, &old);
+    VirtualProtect(&table[i * 2], 2 * sizeof(void*), PAGE_READWRITE, &old);
+    table[i * 2] = localized ? kButtonNames[b] : kPadKeyName[b];
+    k = kPadKey[b];
+    VirtualProtect(&table[i * 2], 2 * sizeof(void*), old, &old);
   }
 }
 
+void patch_key_names() {
+  auto localized = at<const char**>(g->localizedKeyNames);
+  auto names = localized - 96 * 2;
+  if (strcmp(names[0], "TAB") || strcmp(localized[0], "KEY_TAB")) { logmsg("key name table not found, pad keys unnamed"); return; }
+  rename_aux(names, false);
+  rename_aux(localized, true);
+  logmsg("pad key names: %s", at<Key_KeynumToString_t>(g->keynumToString)(kPadKey[LT], 0));  // expect BUTTON_LTRIG
+}
+
 // Hints ("Press [{+usereload}]") show the first two keys bound to a command, in key order, so
-// keyboard keys always win. With a pad connected, prefer the controller keys.
+// keyboard keys always win. While the pad is in use, prefer the controller keys.
 // PC-only commands that the console layout covers with a combined command.
 constexpr const char* kConsoleEquivalent[][2] = {
   {"+activate", "+usereload"}, {"+reload", "+usereload"}, {"+melee_breath", "+melee"}, {"+melee_zoom", "+melee"},
@@ -726,8 +781,8 @@ constexpr const char* kConsoleEquivalent[][2] = {
 
 int pad_keys_for(const char* cmd, int* keys) {
   int n = 0;
-  for (int k = K_AUX1; k < K_AUX1 + 16 && n < 2; k++)
-    if (auto b = binding_of(k); b && !_stricmp(b, cmd)) keys[n++] = k;
+  for (int k : kPadKey)
+    if (auto b = binding_of(k); n < 2 && b && !_stricmp(b, cmd)) keys[n++] = k;
   return n;
 }
 
@@ -738,7 +793,7 @@ int hint_pad_keys(const char* cmd, int* keys) {
   int i = 0;
   while (i < 64 && seen[i][0] && strcmp(seen[i], cmd)) i++;
   if (i < 64 && !seen[i][0]) { snprintf(seen[i], sizeof seen[i], "%s", cmd); logmsg("hint asks for %s", cmd); }
-  if (!pad.connected || !ownb(gpad_enabled, true)) return 0;
+  if (!pad_in_use) return 0;
   if (int n = pad_keys_for(cmd, keys)) return n;
   for (auto& e : kConsoleEquivalent)
     if (!_stricmp(cmd, e[0]))
@@ -816,25 +871,40 @@ void hook_draw_text() {
 }
 #endif
 
+// --- our zone (menus). Loaded once the game is up, from zone/english/iwpad.ff when it exists. Assets of a
+// later zone replace earlier ones in place (the engine copies the new asset over the old one and keeps the
+// original; asset types with a pool size > 1), so its menus override the stock ones even after the UI loaded them.
+struct XZoneInfo { const char* name; int allocFlags, freeFlags; };
+using DB_LoadXAssets_t = void (*)(XZoneInfo* zones, unsigned count, int sync);
+void load_our_zone() {
+  if (!g->zoneLoad || GetFileAttributesA("zone\\english\\iwpad.ff") == INVALID_FILE_ATTRIBUTES) return;
+  XZoneInfo zone = { "iwpad", 1, 0 };  // allocFlags 1 like common: stays loaded across levels; frees nothing
+  at<DB_LoadXAssets_t>(g->zoneLoad)(&zone, 1, 1);
+  logmsg("zone iwpad loaded");
+}
+
 void hk_Com_EventLoop() {
   static bool first = true;
   if (first) {
     first = false; register_dvars(); logmsg("dvars registered");
+    load_our_zone();
 #ifndef _WIN64
     if (g->drawText) hook_draw_text();
 #endif
   }
   poll_pad();
+  update_in_use();
   if (pad.connected) ensure_binds();
-  // Console-style use: with a pad, +usereload has to be held to pick up/use (a tap reloads).
-  // PC default g_useholdtime is 0, so a press uses at once. Also applies to keyboard use while a pad is connected.
+  // Console-style use: with the pad in use, +usereload has to be held to pick up/use (a tap reloads).
+  // PC default g_useholdtime is 0, so a press uses at once; keyboard/mouse keep that (like IW4x).
+  // Written directly (it's a server dvar, and MW3 has no messages to confirm a "set" went through).
   static int useHold = -1;
-  if (int want = pad.connected ? 250 : 0; want != useHold) {
-    useHold = want;
-    char cmd[40];
-    snprintf(cmd, sizeof cmd, "set g_useholdtime %d\n", want);
-    at<Cbuf_AddText_t>(g->cbuf)(0, cmd);
-  }
+  if (int want = pad_in_use ? 250 : 0; want != useHold)
+    if (auto d = *at<uint8_t**>(g->useHoldTime)) {
+      *reinterpret_cast<int*>(d + g->dvarValue) = want;
+      useHold = want;
+      logmsg("g_useholdtime %d", want);
+    }
   update_buttons();
   at<Com_EventLoop_t>(g->eventLoop)();
 }
