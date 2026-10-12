@@ -1,0 +1,9 @@
+// IW-Pad zone for MW2 x64 (IW4MS): pause menu with test buttons (proof of concept).
+// Build: see zone/README.md
+>game,IW4MS
+>name,iwpad
+
+menulist,ui/iwpad.txt
+
+// Stock assets the menu uses; the leading comma makes them references to the game's own copies.
+material,,popup_button_selection_bar
