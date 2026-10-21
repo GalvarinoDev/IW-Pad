@@ -148,6 +148,23 @@ constexpr uintptr_t kMw2AwAimDvarSlots[AIM_DVAR_COUNT] = {  // AlterWare build: 
 
 // Everything that differs between the supported builds. Mapped in Ghidra (projects mw2.gpr / mw3.gpr /
 // mw2-x86.gpr / mw3-x86.gpr). The x64 and x86 DLLs are separate builds, each with its own table.
+// menuDef_t / itemDef_s offsets that differ between the engines (x64). IW5 starts menuDef_t with a data pointer and
+// adds a handler to itemDef_s after onFocus, so the later item fields move 8 bytes.
+// UiContext / menuDef_t / itemDef_s offsets per engine and word size. IW5 starts menuDef_t with a data pointer and adds
+// a handler to itemDef_s after onFocus. handlers: mouseEnterText .. dvar, cleared to turn a copy into a decoration.
+// editStep: IW5's editFieldDef holds the left/right step where IW4 has the default value.
+struct MenuLayout {
+  int menuCount, menuName, itemCount, items;
+  int itemSize, rectY, rectH, rectClientY, staticFlags, backColor, type, text, dvar, typeData, visibleExp;
+  int handlers, handlersEnd;
+  bool editStep;
+};
+[[maybe_unused]] constexpr MenuLayout
+  kIw4Menus64{0x1438, 0, 0xBC, 0x168, 0x1E8, 0xC, 0x14, 0x20, 0x4C, 0x68, 0xC4, 0xF0, 0x148, 0x188, 0x1A0, 0x108, 0x150, false},
+  kIw5Menus64{0x1438, 8, 0xB8, 0xC0, 0x1F8, 0xC, 0x14, 0x20, 0x4C, 0x68, 0xC4, 0xF0, 0x150, 0x190, 0x1A8, 0x108, 0x158, true},
+  kIw4Menus86{0xA38, 0, 0xAC, 0x118, 0x17C, 0x8, 0x10, 0x1C, 0x44, 0x60, 0xB8, 0xE4, 0x110, 0x134, 0x144, 0xF0, 0x114, false},
+  kIw5Menus86{0xA38, 4, 0xA8, 0xAC, 0x180, 0x8, 0x10, 0x1C, 0x44, 0x60, 0xB8, 0xE4, 0x114, 0x138, 0x144, 0xF0, 0x118, true};
+
 struct Game {
   const char* name;
   DWORD timestamp, imageSize;
@@ -170,6 +187,9 @@ struct Game {
   int dvarValue = 0x10;                            // dvar_t current value offset (MW3 x86: 0xC)
   uintptr_t useHoldTime = 0;                       // g_useholdtime dvar_t* slot (Player_UpdateActivate hold time)
   uintptr_t zoneLoad = 0;                          // DB_LoadXAssets(XZoneInfo*, count, sync); 0: no iwpad zone
+  uintptr_t uiContext = 0;                         // UiContext (Menus[], menuCount); 0: stock menus left alone
+  uintptr_t findAsset = 0;                         // DB_FindXAssetHeader(type, name); 0: stock strings left alone
+  const MenuLayout* menus = nullptr;
 };
 
 constexpr Game kGames[] = {
@@ -185,7 +205,7 @@ constexpr Game kGames[] = {
     {0x1400d0e62}, 0x1400d1880, false,
     0x1403cf180, 0x1403d0000,
     0, 0xE58, 0xE70,
-    kMw2AimDvarSlots, false, 0, 0x10, 0x140d9c050, 0x1400f0ae0 },
+    kMw2AimDvarSlots, false, 0, 0x10, 0x140d9c050, 0x1400f0ae0, 0x141a3ab00, 0x1400ef5d0, &kIw4Menus64 },
   { "MW3 SP x64 (iw5sp.exe)", 0x6A743A58, 0x44BE000,
     0x14007e3c3, 0x14007d9f0, {0x14023d0e7, 0x14023d453}, 0x14023ccb0,
     0x14007eaf0, 0x14022f680, 0x1402f2210, 0x14007f1e0, 0x1402c43f0, 0x1402c4650,
@@ -197,7 +217,7 @@ constexpr Game kGames[] = {
     {0x1402a36b3, 0x1402a37ca, 0x1401585aa}, 0x14007e960, true,
     0x1404d9a00, 0x1404da860,
     8, 0xE44, 0xE5C,
-    nullptr, false, 0, 0x10, 0x14114a9d0 },
+    nullptr, false, 0, 0x10, 0x14114a9d0, 0, 0x142605050, 0x1400a5a20, &kIw5Menus64 },
 #else
   // Steam x86 build (PE 2010-02-10), the one IW4x-SP's zip ships. CL_MouseMove and
   // Key_GetCommandAssignment are usercall here, see the stubs below.
@@ -226,7 +246,7 @@ constexpr Game kGames[] = {
     {0x57c648}, 0x57c520, false,
     0x73ea90, 0x73f940,
     0, 0xE58, 0xE70,
-    kMw2AwAimDvarSlots, false, 0, 0x10, 0x106707c },
+    kMw2AwAimDvarSlots, false, 0, 0x10, 0x106707c, 0, 0x1920470, 0x40b200, &kIw4Menus86 },
   // Steam x86 build (PE 0x50B8E96C). Same usercall functions as MW2 x86, other registers. The hint
   // lookup is a separate Key_GetCommandAssignment again (MW3 x64 inlines it into CL_GetKeyBinding).
   { "MW3 SP x86 (iw5sp.exe)", 0x50B8E96C, 0x2444000,
@@ -240,7 +260,7 @@ constexpr Game kGames[] = {
     {0x57e784, 0x4e533d, 0x4106a0}, 0x57e640, false,
     0x94d290, 0x94e0f8,
     8, 0xE44, 0xE5C,
-    nullptr, true, 0x51b100, 0xC, 0x1357a70 },
+    nullptr, true, 0x51b100, 0xC, 0x1357a70, 0, 0x1c00458, 0x4ff000, &kIw5Menus86 },
 #endif
 };
 const Game* g;
@@ -883,6 +903,218 @@ void load_our_zone() {
   logmsg("zone iwpad loaded");
 }
 
+// --- stock menu patches. The UI keeps the loaded menuDef_t pointers in UiContext.Menus; they are checked every
+// frame, so menus reloaded with ui.ff get patched again. Offsets shared by both engines (x64); the rest is in
+// Game::menus.
+constexpr int UI_MENUS = 0x38, MAX_ITEM_SIZE = 0x1F8, ITEM_TYPE_SLIDER = 10, ITEM_TYPE_YESNO = 11;
+
+// Controller rows added to the Look screen: label, the console's localized label if the game still has it (MW3's
+// code_post_gfx does), dvar, slider range and d-pad step (max 0: Yes/No)
+struct MenuRow { const char* label; const char* key; const char* dvar; float min, max, def, step; };
+constexpr MenuRow kControllerRows[] = {
+  {"Controller Sensitivity", nullptr, "gpad_sensitivity", 0.1f, 5.0f, 1.0f, 0.25f},
+  {"Invert Look", nullptr, "gpad_invert"},
+  {"Aim Assist", "@MENU_AIM_ASSIST", "gpad_aim_assist"},
+  {"Aim Assist Strength", nullptr, "gpad_aim_strength", 0.0f, 1.0f, 0.75f, 0.05f},
+  {"Stick Deadzone", nullptr, "gpad_deadzone", 0.0f, 0.9f, 0.2f, 0.05f},
+  {"Enable Controller", nullptr, "gpad_enabled"},
+};
+
+using DB_FindXAssetHeader_t = const char** (*)(int type, const char* name, int createDefault);  // MW2 has no 3rd arg
+constexpr int ASSET_TYPE_LOCALIZE = 0x1B;
+// the LocalizeEntry {value, name} for name, or null (never creates one)
+const char** find_localized(const char* name) {
+  return g->findAsset ? at<DB_FindXAssetHeader_t>(g->findAsset)(ASSET_TYPE_LOCALIZE, name, 0) : nullptr;
+}
+
+template <class T> T& field(uint8_t* p, int off) { return *reinterpret_cast<T*>(p + off); }
+bool text_is(uint8_t* item, int off, const char* s) { auto t = field<const char*>(item, off); return t && !strcmp(t, s); }
+
+// A row is every item level with its label (MW2: value + label; MW3 adds a selection bar shadow), minus the
+// thin divider lines that sit on or just above it.
+int row_items(uint8_t** src, int count, uint8_t* label, uint8_t** out) {
+  auto& L = *g->menus;
+  int n = 0;
+  float y = field<float>(label, L.rectY);
+  for (int j = 0; j < count && n < 4; j++)
+    if (std::fabs(field<float>(src[j], L.rectY) - y) < 5 && field<float>(src[j], L.rectH) >= 6) out[n++] = src[j];
+  return n;
+}
+
+// pc_options_look gets a divider and the controller rows below its own rows: copies of its Mouse Sensitivity slider
+// row, Smooth Mouse Yes/No row and divider, pointed at the gpad_ dvars. The frontend (ui.ff) and in-game (common.ff)
+// Look are separate menus that both stay loaded, so each gets its own items array; the copies only point into that
+// menu's zone.
+struct LookPatch {
+  uint8_t* menu; uint8_t* items[80];
+  alignas(8) uint8_t copies[28][MAX_ITEM_SIZE];
+  float sliders[3][8];
+  uint8_t *bars[4], *barSliders[4]; int nBars;  // MW3 slider highlight bars and their sliders
+};
+LookPatch lookPatches[2];  // ponytail: frontend + in-game Look; a third Look menu would take over slot 0
+
+constexpr uint32_t WINDOW_DECORATION = 0x100000, WINDOW_HASFOCUS = 2, WINDOW_VISIBLE = 4;
+
+// A slider row's bar shows while its slider has focus. Set from the dynamicFlags (right after staticFlags) every
+// frame instead of a cloned visibility expression: IW5 x86 expressions are bigger than they look and get overwritten.
+void show_slider_bars(LookPatch& p) {
+  int dyn = g->menus->staticFlags + 4;
+  for (int k = 0; k < p.nBars; k++) {
+    auto& flags = field<uint32_t>(p.bars[k], dyn);
+    flags = field<uint32_t>(p.barSliders[k], dyn) & WINDOW_HASFOCUS ? flags | WINDOW_VISIBLE : flags & ~WINDOW_VISIBLE;
+  }
+}
+
+void patch_look(uint8_t* look) {
+  auto& L = *g->menus;
+  LookPatch* p = nullptr;
+  for (auto& lp : lookPatches) if (lp.menu == look) p = &lp;
+  if (p && field<uint8_t**>(look, L.items) == p->items) return show_slider_bars(*p);
+  static uint8_t* failed;
+  if (look == failed) return;
+  if (!p) for (auto& lp : lookPatches) if (!p && !lp.menu) p = &lp;
+  if (!p) p = &lookPatches[0];
+  auto src = field<uint8_t**>(look, L.items);
+  int count = field<int>(look, L.itemCount);
+  uint8_t *slider = nullptr, *sliderLabel = nullptr, *yesNo = nullptr, *yesNoLabel = nullptr, *divider = nullptr;
+  float lastRow = 0;
+  for (int j = 0; j < count; j++) {
+    auto it = src[j];
+    auto text = field<const char*>(it, L.text);
+    if (field<int>(it, L.type) == ITEM_TYPE_SLIDER) slider = it;
+    else if (field<int>(it, L.type) == ITEM_TYPE_YESNO && text_is(it, L.dvar, "m_filter")) yesNo = it;
+    else if (text_is(it, L.text, "@MENU_MOUSE_SENSITIVITY")) sliderLabel = it;
+    else if (text_is(it, L.text, "@MENU_SMOOTH_MOUSE")) yesNoLabel = it;
+    if (text && !strncmp(text, "@MENU_", 6)) lastRow = std::fmax(lastRow, field<float>(it, L.rectY));
+  }
+  for (int j = 0; yesNoLabel && j < count; j++) {  // Look's divider, just above the Smooth Mouse row
+    float d = field<float>(yesNoLabel, L.rectY) - field<float>(src[j], L.rectY);
+    if (field<float>(src[j], L.rectH) < 6 && d >= 0 && d < 10) divider = src[j];
+  }
+  uint8_t *sliderRow[4], *yesNoRow[4];
+  int sliderRowN = slider && sliderLabel ? row_items(src, count, sliderLabel, sliderRow) : 0;
+  int yesNoRowN = yesNo && yesNoLabel ? row_items(src, count, yesNoLabel, yesNoRow) : 0;
+  // MW3 names each Yes/No row and shows its selection bar shadow while the item with that name has focus; its sliders
+  // get no highlight at all, so there every slider row gets the Yes/No row's bar. Copies of the shadow itself draw
+  // at the Smooth Mouse row whatever their rect, so the copied rows go without one.
+  auto rowName = yesNo ? field<const char*>(yesNo, 0) : nullptr;
+  uint8_t* shadow = nullptr;
+  for (int k = 0; rowName && k < yesNoRowN; k++)
+    if (yesNoRow[k] != yesNo && text_is(yesNoRow[k], 0, rowName) && field<uint8_t*>(yesNoRow[k], L.visibleExp))
+      shadow = yesNoRow[k];
+  int need = 1 + int(std::size(kControllerRows)) * (sliderRowN > yesNoRowN ? sliderRowN : yesNoRowN) + (shadow ? 4 : 0);
+  if (!sliderRowN || !yesNoRowN || !divider || need > 28 || count + need > 80) {
+    failed = look;
+    logmsg("menu patch: pc_options_look items not found");
+    return;
+  }
+  // the rows go right after Look's last row in the item list, which is also the d-pad order
+  int at = 0;
+  for (int j = 0; j < count; j++) if (std::fabs(field<float>(src[j], L.rectY) - lastRow) < 5) at = j + 1;
+  uint8_t *added[28], *beforeSlider[1];
+  int c = 0, nAdded = 0, nBefore = 0, s = 0;
+  p->nBars = 0;
+  auto copy = [&](uint8_t* from, float dy) {  // copy of from, moved down by dy
+    auto it = p->copies[c++];
+    memcpy(it, from, L.itemSize);
+    field<float>(it, L.rectY) += dy;
+    field<float>(it, L.rectClientY) += dy;
+    return it;
+  };
+  // the Yes/No row's selection bar as a decoration at the row `y`, shown by show_slider_bars
+  auto highlight = [&](uint8_t** out, int& n, const char* name, float y) {
+    float dy = y - field<float>(yesNoLabel, L.rectY);
+    auto bar = out[n++] = copy(yesNo, dy);
+    field<int>(bar, L.type) = 0;
+    field<const char*>(bar, L.text) = nullptr;
+    field<uint32_t>(bar, L.staticFlags) |= WINDOW_DECORATION;
+    memset(bar + L.handlers, 0, L.handlersEnd - L.handlers);
+    for (int k = 0; k < 4; k++) field<float>(bar, L.backColor + 4 * k) = 1;
+    field<uint8_t*>(bar, L.visibleExp) = nullptr;
+    field<uint32_t>(bar, L.staticFlags + 4) &= ~WINDOW_VISIBLE;
+    field<const char*>(bar, 0) = name;  // not smooth_mouse, or that row's shadow shows too
+    return bar;
+  };
+  if (shadow) {
+    p->bars[p->nBars] = highlight(beforeSlider, nBefore, field<const char*>(slider, L.dvar), field<float>(sliderLabel, L.rectY));
+    p->barSliders[p->nBars++] = slider;
+  }
+  float y = lastRow + 40;  // the gap Look leaves before its own divider
+  added[nAdded++] = copy(divider, y - field<float>(yesNoLabel, L.rectY));
+  for (auto& r : kControllerRows) {
+    bool isSlider = r.max > 0;
+    auto label = isSlider ? sliderLabel : yesNoLabel, value = isSlider ? slider : yesNo;
+    float dy = y - field<float>(label, L.rectY);
+    auto bar = isSlider && shadow ? highlight(added, nAdded, r.dvar, y) : nullptr;
+    for (int k = 0, rn = isSlider ? sliderRowN : yesNoRowN; k < rn; k++) {
+      auto from = (isSlider ? sliderRow : yesNoRow)[k];
+      if (from == shadow) continue;
+      auto it = added[nAdded++] = copy(from, dy);
+      if (from == label) field<const char*>(it, L.text) = r.key && find_localized(r.key + 1) ? r.key : r.label;
+      if (from != value) continue;
+      if (rowName) field<const char*>(it, 0) = r.dvar;  // its own row name, so no other row's bar or shadow shows
+      if (bar) {
+        p->bars[p->nBars] = bar;
+        p->barSliders[p->nBars++] = it;
+      }
+      field<const char*>(it, L.dvar) = r.dvar;
+      if (isSlider) {  // editFieldDef {min, max, def (IW5: step), range, ...}
+        auto tpl = field<float*>(slider, L.typeData), e = p->sliders[s++];
+        memcpy(e, tpl, sizeof p->sliders[0]);
+        e[0] = r.min; e[1] = r.max; e[2] = L.editStep ? r.step : r.def;
+        if (tpl[3] == tpl[1] - tpl[0]) e[3] = r.max - r.min;
+        field<float*>(it, L.typeData) = e;
+      }
+    }
+    y += 20;
+  }
+  int n = 0;  // decorations are drawn in list order, so the slider highlights go before their slider
+  for (int j = 0; j < count; j++) {
+    if (src[j] == slider) for (int k = 0; k < nBefore; k++) p->items[n++] = beforeSlider[k];
+    p->items[n++] = src[j];
+    if (j + 1 == at) for (int k = 0; k < nAdded; k++) p->items[n++] = added[k];
+  }
+  p->menu = look;
+  field<uint8_t**>(look, L.items) = p->items;
+  field<int>(look, L.itemCount) = n;
+  logmsg("menu patched: pc_options_look +%d controller items", n - count);
+}
+
+void patch_menus() {
+  if (!g->uiContext) return;
+  auto dc = at<uint8_t*>(g->uiContext);
+  for (int i = 0, n = field<int>(dc, g->menus->menuCount); i < n; i++) {
+    auto menu = field<uint8_t*>(dc, UI_MENUS + sizeof(void*) * i);
+    if (menu && !strcmp(field<const char*>(menu, g->menus->menuName), "pc_options_look")) patch_look(menu);
+  }
+}
+
+// --- localized strings with a keyboard key written into the text. While the pad is in use their LocalizeEntry
+// {value, name} points at a copy of the stock text with the key (and its colour code) replaced, and back at the
+// stock text for keyboard/mouse. Looked up every frame because the entries are reloaded with their zones (a reloaded
+// entry holds the stock text again). Names missing from a game are skipped.
+struct PadString { const char* name; const char* key; const char* pad; const char* stock; char text[96]; };
+PadString padStrings[] = {
+  {"PLATFORM_BACK_CAPS", "ESC", "^1B"},      // MW2 options footer "BACK - ESC"
+  {"PLATFORM_BACK_SHORTCUT", "ESC", "^1B"},  // MW3 options footer "Back ESC"
+};
+
+void swap_pad_strings() {
+  if (!g->findAsset) return;
+  for (auto& s : padStrings) {
+    auto entry = find_localized(s.name);
+    if (!entry) continue;
+    if (*entry != s.text) {
+      s.stock = *entry;
+      auto key = strstr(s.stock, s.key);
+      if (!key) continue;
+      auto cut = key - s.stock >= 2 && key[-2] == '^' ? key - 2 : key;
+      snprintf(s.text, sizeof s.text, "%.*s%s%s", int(cut - s.stock), s.stock, s.pad, key + strlen(s.key));
+    }
+    *entry = pad_in_use ? s.text : s.stock;
+  }
+}
+
 void hk_Com_EventLoop() {
   static bool first = true;
   if (first) {
@@ -906,6 +1138,8 @@ void hk_Com_EventLoop() {
       logmsg("g_useholdtime %d", want);
     }
   update_buttons();
+  patch_menus();
+  swap_pad_strings();
   at<Com_EventLoop_t>(g->eventLoop)();
 }
 
