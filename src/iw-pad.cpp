@@ -157,13 +157,14 @@ struct MenuLayout {
   int menuCount, menuName, itemCount, items;
   int itemSize, rectY, rectH, rectClientY, staticFlags, backColor, type, text, dvar, typeData, visibleExp;
   int handlers, handlersEnd;
+  int floatExpCount;  // itemDef floatExpressionCount (rect expressions); IW5 drops imageTrack before it
   bool editStep;
 };
 [[maybe_unused]] constexpr MenuLayout
-  kIw4Menus64{0x1438, 0, 0xBC, 0x168, 0x1E8, 0xC, 0x14, 0x20, 0x4C, 0x68, 0xC4, 0xF0, 0x148, 0x188, 0x1A0, 0x108, 0x150, false},
-  kIw5Menus64{0x1438, 8, 0xB8, 0xC0, 0x1F8, 0xC, 0x14, 0x20, 0x4C, 0x68, 0xC4, 0xF0, 0x150, 0x190, 0x1A8, 0x108, 0x158, true},
-  kIw4Menus86{0xA38, 0, 0xAC, 0x118, 0x17C, 0x8, 0x10, 0x1C, 0x44, 0x60, 0xB8, 0xE4, 0x110, 0x134, 0x144, 0xF0, 0x114, false},
-  kIw5Menus86{0xA38, 4, 0xA8, 0xAC, 0x180, 0x8, 0x10, 0x1C, 0x44, 0x60, 0xB8, 0xE4, 0x114, 0x138, 0x144, 0xF0, 0x118, true};
+  kIw4Menus64{0x1438, 0, 0xBC, 0x168, 0x1E8, 0xC, 0x14, 0x20, 0x4C, 0x68, 0xC4, 0xF0, 0x148, 0x188, 0x1A0, 0x108, 0x150, 0x194, false},
+  kIw5Menus64{0x1438, 8, 0xB8, 0xC0, 0x1F8, 0xC, 0x14, 0x20, 0x4C, 0x68, 0xC4, 0xF0, 0x150, 0x190, 0x1A8, 0x108, 0x158, 0x198, true},
+  kIw4Menus86{0xA38, 0, 0xAC, 0x118, 0x17C, 0x8, 0x10, 0x1C, 0x44, 0x60, 0xB8, 0xE4, 0x110, 0x134, 0x144, 0xF0, 0x114, 0x13C, false},
+  kIw5Menus86{0xA38, 4, 0xA8, 0xAC, 0x180, 0x8, 0x10, 0x1C, 0x44, 0x60, 0xB8, 0xE4, 0x114, 0x138, 0x144, 0xF0, 0x118, 0x13C, true};
 
 struct Game {
   const char* name;
@@ -336,7 +337,7 @@ int dvi(AimDvar d, int def) { auto p = aim_dvar(d); return p ? *reinterpret_cast
 float ownf(uint8_t* p, float def) { return p ? *reinterpret_cast<float*>(p + g->dvarValue) : def; }
 bool ownb(uint8_t* p, bool def) { return p ? *(p + g->dvarValue) != 0 : def; }
 
-uint8_t *gpad_in_use, *gpad_enabled, *gpad_sensitivity, *gpad_invert, *gpad_deadzone, *gpad_aim_assist, *gpad_aim_strength, *gpad_aim_range, *gpad_autoaim_range;
+uint8_t *gpad_in_use, *gpad_reset, *gpad_enabled, *gpad_sensitivity, *gpad_invert, *gpad_deadzone, *gpad_aim_assist, *gpad_aim_strength, *gpad_aim_range, *gpad_autoaim_range;
 
 void register_dvars() {
   auto rb = at<Dvar_RegisterBool_t>(g->dvarBool);
@@ -344,6 +345,7 @@ void register_dvars() {
   constexpr unsigned ARCHIVE = 1;
   gpad_enabled = rb("gpad_enabled", true, ARCHIVE, "Enable controller input");
   gpad_in_use = rb("gpad_in_use", false, 0, "The controller was used last (keyboard or mouse buttons clear it)");
+  gpad_reset = rb("gpad_reset", false, 0, "Set to reset the controller settings to their defaults (Look menu row)");
   gpad_aim_assist = rb("gpad_aim_assist", true, ARCHIVE, "Enable controller aim assist (slowdown, lock on, auto aim)");
   gpad_invert = rb("gpad_invert", false, ARCHIVE, "Invert controller look pitch");
   gpad_sensitivity = rf("gpad_sensitivity", 1.0f, 0.1f, 5.0f, ARCHIVE, "Controller look sensitivity");
@@ -909,15 +911,29 @@ void load_our_zone() {
 constexpr int UI_MENUS = 0x38, MAX_ITEM_SIZE = 0x1F8, ITEM_TYPE_SLIDER = 10, ITEM_TYPE_YESNO = 11;
 
 // Controller rows added to the Look screen: label, the console's localized label if the game still has it (MW3's
-// code_post_gfx does), dvar, slider range and d-pad step (max 0: Yes/No)
-struct MenuRow { const char* label; const char* key; const char* dvar; float min, max, def, step; };
+// code_post_gfx does), dvar, slider range and d-pad step (max 0: Yes/No), and for a slider the dvar_t whose value
+// shows next to it, times `shown`, with `unit`; or, with `steps`, the slider moves between those values and shows
+// the step number
+struct MenuRow {
+  const char* label; const char* key; const char* dvar; float min, max, def, step; uint8_t** var; float shown; const char* unit;
+  const float* steps; int nSteps;
+};
+// The console Look Sensitivity list, 1-10 (Medium = 2 is the default): view sensitivity values, which scale the turn
+// rates like gpad_sensitivity. MW3's own table (x64 0x1403f75b0, profile_menuDvarsSetup; profileMenuOption_sensitivity
+// is 1-10, default 2). MW2's PC data only keeps the Low/Medium/High/Insane presets (code_post_gfx.ff
+// viewsensitivity_*.cfg: 0.6 / 1 / 1.8 / 4), which match.
+constexpr float kConsoleSensitivity[] = {0.6f, 1.0f, 1.4f, 1.8f, 2.0f, 2.2f, 2.6f, 3.0f, 3.5f, 4.0f};
 constexpr MenuRow kControllerRows[] = {
-  {"Controller Sensitivity", nullptr, "gpad_sensitivity", 0.1f, 5.0f, 1.0f, 0.25f},
+  // a tiny step so that in MW3 too a press only nudges it and show_slider_values moves it a whole step
+  {"Controller Sensitivity", nullptr, "gpad_sensitivity", 0.6f, 4.0f, 1.0f, 0.01f, &gpad_sensitivity, 0, "",
+   kConsoleSensitivity, int(std::size(kConsoleSensitivity))},
   {"Invert Look", nullptr, "gpad_invert"},
   {"Aim Assist", "@MENU_AIM_ASSIST", "gpad_aim_assist"},
-  {"Aim Assist Strength", nullptr, "gpad_aim_strength", 0.0f, 1.0f, 0.75f, 0.05f},
-  {"Stick Deadzone", nullptr, "gpad_deadzone", 0.0f, 0.9f, 0.2f, 0.05f},
+  // percent of console aim assist (100% = console) and of stick travel (console: 20%)
+  {"Aim Assist Strength", nullptr, "gpad_aim_strength", 0.0f, 1.0f, 0.75f, 0.05f, &gpad_aim_strength, 100, "%"},
+  {"Stick Deadzone", nullptr, "gpad_deadzone", 0.0f, 0.9f, 0.2f, 0.05f, &gpad_deadzone, 100, "%"},
   {"Enable Controller", nullptr, "gpad_enabled"},
+  {"Reset Controller Settings", nullptr, "gpad_reset"},
 };
 
 using DB_FindXAssetHeader_t = const char** (*)(int type, const char* name, int createDefault);  // MW2 has no 3rd arg
@@ -947,11 +963,12 @@ int row_items(uint8_t** src, int count, uint8_t* label, uint8_t** out) {
 // menu's zone.
 struct LookPatch {
   uint8_t* menu; uint8_t* items[80];
-  alignas(8) uint8_t copies[28][MAX_ITEM_SIZE];
+  alignas(8) uint8_t copies[32][MAX_ITEM_SIZE];
   float sliders[3][8];
   uint8_t *bars[4], *barSliders[4]; int nBars;  // MW3 slider highlight bars and their sliders
+  uint8_t *values[3], *valueSliders[3]; const MenuRow* valueRows[3]; char valueText[3][16]; float last[3]; int nValues;  // slider values
 };
-LookPatch lookPatches[2];  // ponytail: frontend + in-game Look; a third Look menu would take over slot 0
+LookPatch lookPatches[4];  // frontend and in-game Look (MW3: pc_options_look_ingame), plus reloads
 
 constexpr uint32_t WINDOW_DECORATION = 0x100000, WINDOW_HASFOCUS = 2, WINDOW_VISIBLE = 4;
 
@@ -965,15 +982,76 @@ void show_slider_bars(LookPatch& p) {
   }
 }
 
+// Each controller slider's current value ("0.20") sits just right of its bar. Set every frame: the text follows the
+// dvar and the position the slider's rect, which MW3 recomputes from its rect expressions. rect and rectClient are
+// {x, y, w, h}.
+// index of the step closest to v
+int nearest_step(const MenuRow& r, float v) {
+  int n = 0;
+  for (int j = 1; j < r.nSteps; j++) if (std::fabs(r.steps[j] - v) < std::fabs(r.steps[n] - v)) n = j;
+  return n;
+}
+
+void show_slider_values(LookPatch& p) {
+  auto& L = *g->menus;
+  for (int k = 0; k < p.nValues; k++) {
+    auto& r = *p.valueRows[k];
+    float v = ownf(*r.var, r.def);
+    if (r.steps && *r.var && v != p.last[k]) {
+      // a press (MW2: range / 40, MW3: r.step) is less than the closest steps' gap: the next step that way; a bigger
+      // jump (mouse drag) goes to the nearest step
+      int n = nearest_step(r, v);
+      if (float last = p.last[k]; std::fabs(v - last) < 0.1f) {
+        if (v > last) for (n = r.nSteps - 1; n > 0 && r.steps[n - 1] > last + 0.001f; n--) {}  // first step above
+        else for (n = 0; n < r.nSteps - 1 && r.steps[n + 1] < last - 0.001f; n++) {}       // last step below
+      }
+      v = r.steps[n];
+      *reinterpret_cast<float*>(*r.var + g->dvarValue) = v;
+      p.last[k] = v;
+    } else if (!L.editStep && *r.var && v != p.last[k]) {
+      // MW2 (Item_HandleKey slider case) moves a slider by (max - min) / ui_sliderSteps per press, default 40, and
+      // has no step field (IW5 has, so MW3 already steps by r.step). That's a fraction of r.step, so a press moves
+      // one whole step that way instead; a bigger jump (mouse drag) rounds to the nearest step.
+      float d = v - p.last[k];
+      v = std::fabs(d) < r.step ? p.last[k] + (d > 0 ? r.step : -r.step) : std::round(v / r.step) * r.step;
+      v = std::fmin(std::fmax(v, r.min), r.max);
+      *reinterpret_cast<float*>(*r.var + g->dvarValue) = v;
+      p.last[k] = v;
+    }
+    if (r.steps) snprintf(p.valueText[k], sizeof p.valueText[k], "%d", nearest_step(r, v) + 1);  // a value set in
+    else snprintf(p.valueText[k], sizeof p.valueText[k], "%g%s", std::round(v * r.shown * 10) / 10, r.unit);  // between: nearest
+    field<const char*>(p.values[k], L.text) = p.valueText[k];
+    // right of the bar: MW2 (Item_Paint slider case) draws it SLIDER_WIDTH 96 wide at rect x + textalignx (0x18 before
+    // text; the Look sliders are left aligned) inside a row-wide rect; MW3's rect is the bar, set by its rect
+    // expressions (its rectClient keeps the menu file's row-wide rect, and text is drawn from rectClient, so both get x)
+    auto s = p.valueSliders[k];
+    float x = field<float>(s, L.rectY - 4) + 8 +
+              (L.editStep ? field<float>(s, L.rectY + 4) : field<float>(s, L.text - 0x18) + 96);
+    for (int y : {L.rectY, L.rectClientY}) {
+      field<float>(p.values[k], y - 4) = x;
+      field<float>(p.values[k], y + 4) = 40;
+    }
+  }
+}
+
 void patch_look(uint8_t* look) {
   auto& L = *g->menus;
   LookPatch* p = nullptr;
   for (auto& lp : lookPatches) if (lp.menu == look) p = &lp;
-  if (p && field<uint8_t**>(look, L.items) == p->items) return show_slider_bars(*p);
+  if (p && field<uint8_t**>(look, L.items) == p->items) {
+    show_slider_bars(*p);
+    show_slider_values(*p);
+    return;
+  }
   static uint8_t* failed;
   if (look == failed) return;
-  if (!p) for (auto& lp : lookPatches) if (!p && !lp.menu) p = &lp;
-  if (!p) p = &lookPatches[0];
+  // a free slot, or one whose menu was unloaded or reloaded (no longer uses its items)
+  if (!p) for (auto& lp : lookPatches) if (!p && (!lp.menu || field<uint8_t**>(lp.menu, L.items) != lp.items)) p = &lp;
+  if (!p) {
+    failed = look;
+    logmsg("menu patch: no free Look slot");
+    return;
+  }
   auto src = field<uint8_t**>(look, L.items);
   int count = field<int>(look, L.itemCount);
   uint8_t *slider = nullptr, *sliderLabel = nullptr, *yesNo = nullptr, *yesNoLabel = nullptr, *divider = nullptr;
@@ -1002,8 +1080,8 @@ void patch_look(uint8_t* look) {
   for (int k = 0; rowName && k < yesNoRowN; k++)
     if (yesNoRow[k] != yesNo && text_is(yesNoRow[k], 0, rowName) && field<uint8_t*>(yesNoRow[k], L.visibleExp))
       shadow = yesNoRow[k];
-  int need = 1 + int(std::size(kControllerRows)) * (sliderRowN > yesNoRowN ? sliderRowN : yesNoRowN) + (shadow ? 4 : 0);
-  if (!sliderRowN || !yesNoRowN || !divider || need > 28 || count + need > 80) {
+  int need = 1 + int(std::size(kControllerRows)) * (sliderRowN > yesNoRowN ? sliderRowN : yesNoRowN) + (shadow ? 4 : 0) + 3;
+  if (!sliderRowN || !yesNoRowN || !divider || need > 32 || count + need > 80) {
     failed = look;
     logmsg("menu patch: pc_options_look items not found");
     return;
@@ -1011,9 +1089,9 @@ void patch_look(uint8_t* look) {
   // the rows go right after Look's last row in the item list, which is also the d-pad order
   int at = 0;
   for (int j = 0; j < count; j++) if (std::fabs(field<float>(src[j], L.rectY) - lastRow) < 5) at = j + 1;
-  uint8_t *added[28], *beforeSlider[1];
+  uint8_t *added[32], *beforeSlider[1];
   int c = 0, nAdded = 0, nBefore = 0, s = 0;
-  p->nBars = 0;
+  p->nBars = p->nValues = 0;
   auto copy = [&](uint8_t* from, float dy) {  // copy of from, moved down by dy
     auto it = p->copies[c++];
     memcpy(it, from, L.itemSize);
@@ -1058,12 +1136,26 @@ void patch_look(uint8_t* look) {
         p->barSliders[p->nBars++] = it;
       }
       field<const char*>(it, L.dvar) = r.dvar;
+      // the reset row is an action, not a setting: the engine still paints Yes/No from the dvar each frame, so its
+      // textscale (0x10 before text) is 0
+      if (!strcmp(r.dvar, "gpad_reset")) field<float>(it, L.text - 0x10) = 0;
       if (isSlider) {  // editFieldDef {min, max, def (IW5: step), range, ...}
         auto tpl = field<float*>(slider, L.typeData), e = p->sliders[s++];
         memcpy(e, tpl, sizeof p->sliders[0]);
         e[0] = r.min; e[1] = r.max; e[2] = L.editStep ? r.step : r.def;
         if (tpl[3] == tpl[1] - tpl[0]) e[3] = r.max - r.min;
         field<float*>(it, L.typeData) = e;
+        // the value: a copy of the label without its rect expressions, placed by show_slider_values
+        auto v = added[nAdded++] = copy(label, dy);
+        field<int>(v, L.floatExpCount) = 0;
+        // left aligned, unshifted (labels are right aligned, MW2's with textalignx -180): textAlignMode and
+        // textalignx are 0x1C and 0x18 before text
+        field<int>(v, L.text - 0x1C) &= ~3;
+        field<float>(v, L.text - 0x18) = 0;
+        p->values[p->nValues] = v;
+        p->valueSliders[p->nValues] = it;
+        p->last[p->nValues] = ownf(*r.var, r.def);
+        p->valueRows[p->nValues++] = &r;
       }
     }
     y += 20;
@@ -1077,7 +1169,7 @@ void patch_look(uint8_t* look) {
   p->menu = look;
   field<uint8_t**>(look, L.items) = p->items;
   field<int>(look, L.itemCount) = n;
-  logmsg("menu patched: pc_options_look +%d controller items", n - count);
+  logmsg("menu patched: %s +%d controller items", field<const char*>(look, L.menuName), n - count);
 }
 
 void patch_menus() {
@@ -1085,7 +1177,8 @@ void patch_menus() {
   auto dc = at<uint8_t*>(g->uiContext);
   for (int i = 0, n = field<int>(dc, g->menus->menuCount); i < n; i++) {
     auto menu = field<uint8_t*>(dc, UI_MENUS + sizeof(void*) * i);
-    if (menu && !strcmp(field<const char*>(menu, g->menus->menuName), "pc_options_look")) patch_look(menu);
+    auto name = menu ? field<const char*>(menu, g->menus->menuName) : nullptr;
+    if (name && (!strcmp(name, "pc_options_look") || !strcmp(name, "pc_options_look_ingame"))) patch_look(menu);
   }
 }
 
@@ -1138,6 +1231,14 @@ void hk_Com_EventLoop() {
       logmsg("g_useholdtime %d", want);
     }
   update_buttons();
+  // The Look menu's Reset Controller Settings row sets gpad_reset: defaults as in register_dvars, through the console
+  // so they are saved like a menu change; gpad_reset is cleared at once so the row flips back to No.
+  if (ownb(gpad_reset, false)) {
+    *(gpad_reset + g->dvarValue) = 0;
+    at<Cbuf_AddText_t>(g->cbuf)(0, "set gpad_enabled 1; set gpad_invert 0; set gpad_aim_assist 1; "
+        "set gpad_aim_strength 0.75; set gpad_sensitivity 1; set gpad_deadzone 0.2\n");
+    logmsg("controller settings reset");
+  }
   patch_menus();
   swap_pad_strings();
   at<Com_EventLoop_t>(g->eventLoop)();
