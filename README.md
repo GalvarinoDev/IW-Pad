@@ -13,6 +13,8 @@ IW-Pad was originally created for [DeckOps](https://github.com/GalvarinoDev/Deck
 - Controller buttons go through the normal game binds. You can change them in the console or in `config.cfg`.
 - Controller buttons operate the menus.
 - On-screen hints show controller buttons (for example, `A`) instead of keyboard keys.
+- The Look options screen has controller settings: sensitivity, invert look, aim assist and more.
+- While you use the controller, the options screens show `B` as the back button instead of `ESC`.
 
 ## How it works
 
@@ -86,7 +88,21 @@ Buttons use the console names, for example `bind BUTTON_A "+gostand"` or `bind D
 
 ## Settings
 
-Set these values in the game console (`~`) or in `config.cfg`.
+Open **Options > Controls > Look**. The controller settings are below the mouse settings:
+
+| Row | Setting |
+|---|---|
+| Controller Sensitivity | `gpad_sensitivity` |
+| Invert Look | `gpad_invert` |
+| Aim Assist | `gpad_aim_assist` |
+| Aim Assist Strength | `gpad_aim_strength` |
+| Stick Deadzone | `gpad_deadzone` |
+| Enable Controller | `gpad_enabled` |
+
+Use the D-pad or stick to move between rows. Press left or right to change a slider. Press `A` to change a Yes/No row.
+If you set Enable Controller to No, the controller stops working, also in the menus. Use the mouse or keyboard to set it back.
+
+You can also set these values in the game console (`~`) or in `config.cfg`.
 
 | Setting | Default | Function |
 |---|---|---|
