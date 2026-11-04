@@ -23,6 +23,12 @@ int iwpad_key_get_command_assignment(int client, const char* cmd, int* keys);
 void stub_mouse_move();
 void stub_key_get_command_assignment();
 void call_mouse_move(uintptr_t fn, uint8_t* cmd, float frametime);
+// Remote control move: eax = client, cmd in edi (MW2) / esi (MW3). Run it, then add the sticks.
+void iwpad_remote_steer(uint8_t* cmd);
+void stub_remote_move();
+void stub_remote_move_mw3();
+extern uintptr_t iwpad_remote_move;
+uintptr_t iwpad_remote_move;
 int call_key_get_command_assignment(uintptr_t fn, int client, const char* cmd, int* keys);
 void stub_mouse_move_mw3();
 void stub_key_get_command_assignment_mw3();
@@ -37,6 +43,18 @@ uintptr_t iwpad_draw_text_resume;
 }
 asm(R"(
 .text
+_stub_remote_move:                   # eax = client, edi = cmd
+  call *_iwpad_remote_move
+  pushl %edi
+  call _iwpad_remote_steer
+  addl $4, %esp
+  ret
+_stub_remote_move_mw3:               # eax = client, esi = cmd
+  call *_iwpad_remote_move
+  pushl %esi
+  call _iwpad_remote_steer
+  addl $4, %esp
+  ret
 _stub_mouse_move:                    # edi = cmd, 4(esp) = frametime
   pushl 4(%esp)
   pushl %edi
@@ -94,7 +112,7 @@ _call_key_get_command_assignment_mw3: # (fn, client, cmd, keys)
   call *8(%esp)
   popl %ebx
   ret
-.globl _stub_mouse_move, _stub_key_get_command_assignment, _call_mouse_move, _call_key_get_command_assignment
+.globl _stub_remote_move, _stub_remote_move_mw3, _stub_mouse_move, _stub_key_get_command_assignment, _call_mouse_move, _call_key_get_command_assignment
 _stub_draw_text:                     # cdecl R_AddCmdDrawText(text, ...)
   pushl 4(%esp)
   call _iwpad_skip_text
@@ -191,6 +209,7 @@ struct Game {
   uintptr_t uiContext = 0;                         // UiContext (Menus[], menuCount); 0: stock menus left alone
   uintptr_t findAsset = 0;                         // DB_FindXAssetHeader(type, name); 0: stock strings left alone
   const MenuLayout* menus = nullptr;
+  uintptr_t callRemoteMove = 0, remoteMove = 0;    // CL_CreateCmd -> remote control move (Predator), replaces CL_MouseMove
 };
 
 constexpr Game kGames[] = {
@@ -206,7 +225,7 @@ constexpr Game kGames[] = {
     {0x1400d0e62}, 0x1400d1880, false,
     0x1403cf180, 0x1403d0000,
     0, 0xE58, 0xE70,
-    kMw2AimDvarSlots, false, 0, 0x10, 0x140d9c050, 0x1400f0ae0, 0x141a3ab00, 0x1400ef5d0, &kIw4Menus64 },
+    kMw2AimDvarSlots, false, 0, 0x10, 0x140d9c050, 0x1400f0ae0, 0x141a3ab00, 0x1400ef5d0, &kIw4Menus64, 0x1400d053c, 0x1400cff70 },
   { "MW3 SP x64 (iw5sp.exe)", 0x6A743A58, 0x44BE000,
     0x14007e3c3, 0x14007d9f0, {0x14023d0e7, 0x14023d453}, 0x14023ccb0,
     0x14007eaf0, 0x14022f680, 0x1402f2210, 0x14007f1e0, 0x1402c43f0, 0x1402c4650,
@@ -218,7 +237,7 @@ constexpr Game kGames[] = {
     {0x1402a36b3, 0x1402a37ca, 0x1401585aa}, 0x14007e960, true,
     0x1404d9a00, 0x1404da860,
     8, 0xE44, 0xE5C,
-    nullptr, false, 0, 0x10, 0x14114a9d0, 0, 0x142605050, 0x1400a5a20, &kIw5Menus64 },
+    nullptr, false, 0, 0x10, 0x14114a9d0, 0, 0x142605050, 0x1400a5a20, &kIw5Menus64, 0x14007e37c, 0x14007de20 },
 #else
   // Steam x86 build (PE 2010-02-10), the one IW4x-SP's zip ships. CL_MouseMove and
   // Key_GetCommandAssignment are usercall here, see the stubs below.
@@ -233,7 +252,7 @@ constexpr Game kGames[] = {
     {0x579e98}, 0x579c70, false,
     0x73ba90, 0x73c940,
     0, 0xE58, 0xE70,
-    kMw2AimDvarSlots, false, 0, 0x10, 0x1063afc },
+    kMw2AimDvarSlots, false, 0, 0x10, 0x1063afc, 0, 0, 0, nullptr, 0x579ae2, 0x579960 },
   // AlterWare build (PE 2009-11-07, iw4x-sp's data/iw4sp.exe), mapped by iw4x-sp.exe into its own image.
   // Ported from the entry above by masked byte signatures (ghidra/mw2-aw.gpr); same code, other addresses.
   { "MW2 SP x86 AlterWare (iw4x-sp)", 0x4AF4BDCC, 0x2153000,
@@ -247,7 +266,7 @@ constexpr Game kGames[] = {
     {0x57c648}, 0x57c520, false,
     0x73ea90, 0x73f940,
     0, 0xE58, 0xE70,
-    kMw2AwAimDvarSlots, false, 0, 0x10, 0x106707c, 0, 0x1920470, 0x40b200, &kIw4Menus86 },
+    kMw2AwAimDvarSlots, false, 0, 0x10, 0x106707c, 0, 0x1920470, 0x40b200, &kIw4Menus86, 0x57baf2, 0x57b970 },
   // Steam x86 build (PE 0x50B8E96C). Same usercall functions as MW2 x86, other registers. The hint
   // lookup is a separate Key_GetCommandAssignment again (MW3 x64 inlines it into CL_GetKeyBinding).
   { "MW3 SP x86 (iw5sp.exe)", 0x50B8E96C, 0x2444000,
@@ -261,7 +280,7 @@ constexpr Game kGames[] = {
     {0x57e784, 0x4e533d, 0x4106a0}, 0x57e640, false,
     0x94d290, 0x94e0f8,
     8, 0xE44, 0xE5C,
-    nullptr, true, 0x51b100, 0xC, 0x1357a70, 0, 0x1c00458, 0x4ff000, &kIw5Menus86 },
+    nullptr, true, 0x51b100, 0xC, 0x1357a70, 0, 0x1c00458, 0x4ff000, &kIw5Menus86, 0x57e4df, 0x57e360 },
 #endif
 };
 const Game* g;
@@ -872,6 +891,29 @@ void hk_CL_MouseMove(uint8_t* cmd, float frametime) {
   apply_look(Aim{at<uint8_t*>(g->aaGlob)}, *reinterpret_cast<int*>(cmd + 4), frametime, pitch, yaw);
 }
 
+// While a Predator is steered, CL_CreateCmd calls the remote control move instead of CL_MouseMove. It reads only the
+// mouse into usercmd.remoteControlAngles (pitch, yaw: -127..127, mouse right/up is negative), at cmdForward + 0x22 in
+// every build. Either stick steers; the player can't walk meanwhile.
+void remote_steer(uint8_t* cmd) {
+  if (!pad.connected || !ownb(gpad_enabled, true) || (*at<int*>(g->keyCatchers) & (KEYCATCH_UI | KEYCATCH_CONSOLE)))
+    return;
+  auto add = [](int8_t& v, float stick) {
+    int n = v - int(std::lround(stick * 127));
+    v = int8_t(n > 127 ? 127 : n < -127 ? -127 : n);
+  };
+  auto angles = reinterpret_cast<int8_t*>(cmd + g->cmdForward + 0x22);
+  float up = pad.ry + pad.ly;
+  add(angles[0], ownb(gpad_invert, false) ? -up : up);
+  add(angles[1], pad.rx + pad.lx);
+}
+
+#ifdef _WIN64
+void hk_remote_move(int client, uint8_t* cmd) {
+  at<void (*)(int, uint8_t*)>(g->remoteMove)(client, cmd);
+  remote_steer(cmd);
+}
+#endif
+
 #ifndef _WIN64
 extern "C" bool iwpad_skip_text(const char* text) { return strncmp(text, "AlterWare IW5-Mod", 17) == 0; }
 
@@ -1339,12 +1381,16 @@ DWORD WINAPI init(void*) {
   void* hint = g->hintIsGetKeyBinding ? reinterpret_cast<void*>(hk_CL_GetKeyBinding)
                                       : reinterpret_cast<void*>(hk_Key_GetCommandAssignment);
   void* mouse = reinterpret_cast<void*>(hk_CL_MouseMove);
+  void* remote = reinterpret_cast<void*>(hk_remote_move);
 #else
+  iwpad_remote_move = g->remoteMove + slide;
+  void* remote = reinterpret_cast<void*>(g->mw3Regs ? stub_remote_move_mw3 : stub_remote_move);
   void* hint = reinterpret_cast<void*>(g->mw3Regs ? stub_key_get_command_assignment_mw3 : stub_key_get_command_assignment);
   void* mouse = reinterpret_cast<void*>(g->mw3Regs ? stub_mouse_move_mw3 : stub_mouse_move);
 #endif
   bool ok = true;
   ok &= patch_call(g->callMouseMove, g->mouseMove, mouse);
+  ok &= patch_call(g->callRemoteMove, g->remoteMove, remote);
   for (auto site : g->callEventLoop) ok &= patch_call(site, g->eventLoop, reinterpret_cast<void*>(hk_Com_EventLoop));
   for (auto site : g->hintCalls) ok &= patch_call(site, g->hintFunc, hint);
   patch_key_names();
@@ -1356,6 +1402,7 @@ DWORD WINAPI init(void*) {
 
 #ifndef _WIN64
 extern "C" void iwpad_mouse_move(uint8_t* cmd, float frametime) { hk_CL_MouseMove(cmd, frametime); }
+extern "C" void iwpad_remote_steer(uint8_t* cmd) { remote_steer(cmd); }
 extern "C" int iwpad_key_get_command_assignment(int client, const char* cmd, int* keys) {
   return hk_Key_GetCommandAssignment(client, cmd, keys);
 }
