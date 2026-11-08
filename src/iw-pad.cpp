@@ -210,6 +210,7 @@ struct Game {
   uintptr_t findAsset = 0;                         // DB_FindXAssetHeader(type, name); 0: stock strings left alone
   const MenuLayout* menus = nullptr;
   uintptr_t callRemoteMove = 0, remoteMove = 0;    // CL_CreateCmd -> remote control move (Predator), replaces CL_MouseMove
+  bool cameraMove = false;                         // MW3: usercmd camera bytes at cmdForward + 4/5 (getnormalizedcameramovement)
 };
 
 constexpr Game kGames[] = {
@@ -237,7 +238,7 @@ constexpr Game kGames[] = {
     {0x1402a36b3, 0x1402a37ca, 0x1401585aa}, 0x14007e960, true,
     0x1404d9a00, 0x1404da860,
     8, 0xE44, 0xE5C,
-    nullptr, false, 0, 0x10, 0x14114a9d0, 0, 0x142605050, 0x1400a5a20, &kIw5Menus64, 0x14007e37c, 0x14007de20 },
+    nullptr, false, 0, 0x10, 0x14114a9d0, 0, 0x142605050, 0x1400a5a20, &kIw5Menus64, 0x14007e37c, 0x14007de20, true },
 #else
   // Steam x86 build (PE 2010-02-10), the one IW4x-SP's zip ships. CL_MouseMove and
   // Key_GetCommandAssignment are usercall here, see the stubs below.
@@ -280,7 +281,7 @@ constexpr Game kGames[] = {
     {0x57e784, 0x4e533d, 0x4106a0}, 0x57e640, false,
     0x94d290, 0x94e0f8,
     8, 0xE44, 0xE5C,
-    nullptr, true, 0x51b100, 0xC, 0x1357a70, 0, 0x1c00458, 0x4ff000, &kIw5Menus86, 0x57e4df, 0x57e360 },
+    nullptr, true, 0x51b100, 0xC, 0x1357a70, 0, 0x1c00458, 0x4ff000, &kIw5Menus86, 0x57e4df, 0x57e360, true },
 #endif
 };
 const Game* g;
@@ -882,6 +883,15 @@ void hk_CL_MouseMove(uint8_t* cmd, float frametime) {
   auto fwd = reinterpret_cast<int8_t*>(cmd + g->cmdForward), right = fwd + 1;
   *fwd = int8_t(clamp_move(*fwd + int(std::lround(pad.ly * 127))));
   *right = int8_t(clamp_move(*right + int(std::lround(pad.lx * 127))));
+
+  // MW3 vehicles steered by script (Hunter Killer DPV) read getnormalizedcameramovement: usercmd bytes cmdForward + 4
+  // (pitch, + = down) and + 5 (yaw, + = right). CL_MouseMove fills them from the mouse while snapFlags+4 has 0x40000
+  // or 0x10000; mirror that with the right stick.
+  if (g->cameraMove && (at<unsigned*>(g->snapFlags)[1] & 0x50000)) {
+    float down = ownb(gpad_invert, false) ? pad.ry : -pad.ry;
+    fwd[4] = int8_t(clamp_move(fwd[4] + int(std::lround(down * 127))));
+    fwd[5] = int8_t(clamp_move(fwd[5] + int(std::lround(pad.rx * 127))));
+  }
 
   // CL_MouseMove skips look on these conditions too
   if (*at<int*>(g->frameMsec) == 0 || (*at<unsigned*>(g->snapFlags) & 0x800)) return;
