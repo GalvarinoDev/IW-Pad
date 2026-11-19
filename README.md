@@ -141,6 +141,10 @@ Look at `iw-pad.log` in the game folder. A correct start shows these lines:
 If the log shows `unsupported game build`, IW-Pad does not know your game build.
 Open an issue and attach the log.
 
+If the log stops at `hooks installed` and the controller does nothing, the game was restarted through Steam without
+IW-Pad. The launcher prevents this from v0.0.9 on by creating `noship_create_steam_appid.txt` next to the game exe.
+If it can't (a read-only folder), create that empty file yourself.
+
 ## Build
 
 You must have [llvm-mingw](https://github.com/mstorsjo/llvm-mingw).

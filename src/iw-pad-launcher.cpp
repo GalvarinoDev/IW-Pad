@@ -27,10 +27,11 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
   } else if (sizeof(void*) == 4 && exists(L"iw5-mod.exe")) {
     exe = dir + L"iw5-mod.exe";
     mode = L" -singleplayer";
-  } else if (!exists(L"iw4sp.exe")) {
-    exe = dir + L"iw5sp.exe";
-    // iw5sp.exe deletes steam_appid.txt at startup and only rewrites it (42680) when this file exists.
-    // Without steam_appid.txt, a non-Steam install gets restarted through Steam and exits at once.
+  } else {
+    if (!exists(L"iw4sp.exe")) exe = dir + L"iw5sp.exe";
+    // iw4sp.exe and iw5sp.exe delete steam_appid.txt at startup and only rewrite it (10180 / 42680) when this file
+    // exists. Without steam_appid.txt, a game started outside Steam (Windows: iw-pad.exe run directly) is restarted
+    // through Steam: the process we loaded iw-pad.dll into exits and the restarted game runs without it.
     std::wstring flag = dir + L"noship_create_steam_appid.txt";
     CloseHandle(CreateFileW(flag.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, 0, nullptr));
   }
@@ -59,7 +60,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
     ? CreateRemoteThread(pi.hProcess, nullptr, 0, load, mem, 0, nullptr) : nullptr;
   if (!th && WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) {
     // e.g. steam_api restarting the game through Steam (no steam_appid.txt)
-    MessageBoxW(nullptr, L"The game exited before iw-pad.dll could load. For MW3, is noship_create_steam_appid.txt next to iw5sp.exe?",
+    MessageBoxW(nullptr, L"The game exited before iw-pad.dll could load. Is noship_create_steam_appid.txt next to the game exe?",
                 L"IW-Pad", MB_ICONERROR);
   } else if (!th) {
     fail(L"Loading iw-pad.dll");
