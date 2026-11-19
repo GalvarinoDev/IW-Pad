@@ -160,7 +160,7 @@ The launcher must have the same bitness as the game.
 ## Credits
 
 - [IW4x](https://github.com/iw4x/iw4x-client): the aim assist logic is ported from `Controller/Engine/View.cpp`.
-- [iw3sp_mod](https://github.com/ahrimd0n/iw3sp-mod): the controller and aim assist logic is ported from `Gamepad.cpp`.
+- [iw3sp_mod](https://gitea.com/JerryALT/iw3sp_mod): the controller and aim assist logic is ported from `Gamepad.cpp`.
 - [AlterWare](https://alterware.dev): iw4x-sp (MW2) and iw5-mod (MW3). IW-Pad works with these clients on 32-bit installs. We used the iw4x-sp symbols to find the game addresses.
 - [llvm-mingw](https://github.com/mstorsjo/llvm-mingw), [Ghidra](https://ghidra-sre.org) and [Capstone](https://www.capstone-engine.org): build and analysis tools.
 
