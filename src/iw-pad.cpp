@@ -4,6 +4,8 @@
 #include <windows.h>
 #include <xinput.h>
 #include <mmsystem.h>
+#include <d3d9.h>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -138,6 +140,7 @@ constexpr uintptr_t kBase = 0x400000;
 #endif
 uintptr_t slide;
 template <class T> T at(uintptr_t a) { return reinterpret_cast<T>(a + slide); }
+template <class T> T& field(uint8_t* p, int off) { return *reinterpret_cast<T*>(p + off); }
 
 // Aim assist dvars. MW2 still registers them (we read the engine's dvar_t* slots); MW3 stripped
 // them, so there we register our own with the same names and the MW2 console defaults.
@@ -211,6 +214,15 @@ struct Game {
   const MenuLayout* menus = nullptr;
   uintptr_t callRemoteMove = 0, remoteMove = 0;    // CL_CreateCmd -> remote control move (Predator), replaces CL_MouseMove
   bool cameraMove = false;                         // MW3: usercmd camera bytes at cmdForward + 4/5 (getnormalizedcameramovement)
+  bool textIcons = false;                          // button glyphs in hints via text icons (make_glyphs)
+  uintptr_t iconRead = 0;                          // x64: the text draw's `mov rcx,[r8+3]` (icon Material*)
+  // x64 text width functions without an icon case, replaced by text_width(): [0] passes its 4th argument on to
+  // SEH_ReadCharFromString (readChar), [1] takes 3 arguments
+  uintptr_t textWidth[2] = {}, readChar = 0;
+  uintptr_t iconLookupCall = 0, iconLookup = 0;    // IW5: the text draw's icon material lookup by name
+  uintptr_t safeArea[2] = {};                      // safeArea_adjusted_horizontal / _vertical dvar_t* slots (0: no console HUD)
+  bool iw5 = false;                                // IW5 Material layout, icons by name ("^\x01" w h len name)
+  uintptr_t slotAlpha = 0;                         // action slot draw: `mov [rsp+0x7c], 1.0` (active slot alpha), nopped by console_hud
 };
 
 constexpr Game kGames[] = {
@@ -226,7 +238,8 @@ constexpr Game kGames[] = {
     {0x1400d0e62}, 0x1400d1880, false,
     0x1403cf180, 0x1403d0000,
     0, 0xE58, 0xE70,
-    kMw2AimDvarSlots, false, 0, 0x10, 0x140d9c050, 0x1400f0ae0, 0x141a3ab00, 0x1400ef5d0, &kIw4Menus64, 0x1400d053c, 0x1400cff70 },
+    kMw2AimDvarSlots, false, 0, 0x10, 0x140d9c050, 0x1400f0ae0, 0x141a3ab00, 0x1400ef5d0, &kIw4Menus64, 0x1400d053c, 0x1400cff70, false, true, 0x140043a57, {0, 0x140009b30}, 0x140241f80,
+    0, 0, {0x1405e0b70, 0x1405e0b78}, false, 0x14008b709 },
   { "MW3 SP x64 (iw5sp.exe)", 0x6A743A58, 0x44BE000,
     0x14007e3c3, 0x14007d9f0, {0x14023d0e7, 0x14023d453}, 0x14023ccb0,
     0x14007eaf0, 0x14022f680, 0x1402f2210, 0x14007f1e0, 0x1402c43f0, 0x1402c4650,
@@ -238,7 +251,8 @@ constexpr Game kGames[] = {
     {0x1402a36b3, 0x1402a37ca, 0x1401585aa}, 0x14007e960, true,
     0x1404d9a00, 0x1404da860,
     8, 0xE44, 0xE5C,
-    nullptr, false, 0, 0x10, 0x14114a9d0, 0, 0x142605050, 0x1400a5a20, &kIw5Menus64, 0x14007e37c, 0x14007de20, true },
+    nullptr, false, 0, 0x10, 0x14114a9d0, 0, 0x142605050, 0x1400a5a20, &kIw5Menus64, 0x14007e37c, 0x14007de20, true,
+    true, 0, {0x1401b80f0, 0x1401b8020}, 0x14028a010, 0x140185b21, 0x1401c4b80, {0x1407172b0, 0x1407172b8}, true, 0x140030ae2 },
 #else
   // Steam x86 build (PE 2010-02-10), the one IW4x-SP's zip ships. CL_MouseMove and
   // Key_GetCommandAssignment are usercall here, see the stubs below.
@@ -267,7 +281,8 @@ constexpr Game kGames[] = {
     {0x57c648}, 0x57c520, false,
     0x73ea90, 0x73f940,
     0, 0xE58, 0xE70,
-    kMw2AwAimDvarSlots, false, 0, 0x10, 0x106707c, 0, 0x1920470, 0x40b200, &kIw4Menus86, 0x57baf2, 0x57b970 },
+    kMw2AwAimDvarSlots, false, 0, 0x10, 0x106707c, 0, 0x1920470, 0x40b200, &kIw4Menus86, 0x57baf2, 0x57b970, false, true,
+    0, {0, 0x508960}, 0x416100, 0, 0, {0x93aaf8, 0x93aa80}, false, 0x4269d8 },
   // Steam x86 build (PE 0x50B8E96C). Same usercall functions as MW2 x86, other registers. The hint
   // lookup is a separate Key_GetCommandAssignment again (MW3 x64 inlines it into CL_GetKeyBinding).
   { "MW3 SP x86 (iw5sp.exe)", 0x50B8E96C, 0x2444000,
@@ -281,7 +296,10 @@ constexpr Game kGames[] = {
     {0x57e784, 0x4e533d, 0x4106a0}, 0x57e640, false,
     0x94d290, 0x94e0f8,
     8, 0xE44, 0xE5C,
-    nullptr, true, 0x51b100, 0xC, 0x1357a70, 0, 0x1c00458, 0x4ff000, &kIw5Menus86, 0x57e4df, 0x57e360, true },
+    nullptr, true, 0x51b100, 0xC, 0x1357a70, 0, 0x1c00458, 0x4ff000, &kIw5Menus86, 0x57e4df, 0x57e360, true,
+    // icons by name like x64: 0x690594 calls 0x52f000 = DB_FindXAssetHeader(MATERIAL, name, 1) (iw5-mod hooks the
+    // same call); R_TextWidth 0x4e9350 (4 args, readChar 0x4db3e0) has no icon case, so it's replaced
+    true, 0, {0x4e9350, 0}, 0x4db3e0, 0x690594, 0x52f000, {0xb4dc8c, 0xb4dc10}, true, 0x50090b },
 #endif
 };
 const Game* g;
@@ -357,7 +375,7 @@ int dvi(AimDvar d, int def) { auto p = aim_dvar(d); return p ? *reinterpret_cast
 float ownf(uint8_t* p, float def) { return p ? *reinterpret_cast<float*>(p + g->dvarValue) : def; }
 bool ownb(uint8_t* p, bool def) { return p ? *(p + g->dvarValue) != 0 : def; }
 
-uint8_t *gpad_in_use, *gpad_reset, *gpad_enabled, *gpad_sensitivity, *gpad_invert, *gpad_deadzone, *gpad_aim_assist, *gpad_aim_strength, *gpad_aim_range, *gpad_autoaim_range;
+uint8_t *gpad_console_hud, *gpad_hud_safe_area, *gpad_ps_glyphs, *gpad_in_use, *gpad_reset, *gpad_enabled, *gpad_sensitivity, *gpad_invert, *gpad_deadzone, *gpad_aim_assist, *gpad_aim_strength, *gpad_aim_range, *gpad_autoaim_range;
 
 void register_dvars() {
   auto rb = at<Dvar_RegisterBool_t>(g->dvarBool);
@@ -368,6 +386,9 @@ void register_dvars() {
   gpad_reset = rb("gpad_reset", false, 0, "Set to reset the controller settings to their defaults (Look menu row)");
   gpad_aim_assist = rb("gpad_aim_assist", true, ARCHIVE, "Enable controller aim assist (slowdown, lock on, auto aim)");
   gpad_invert = rb("gpad_invert", false, ARCHIVE, "Invert controller look pitch");
+  gpad_ps_glyphs = rb("gpad_ps_glyphs", false, ARCHIVE, "Button icons: PlayStation 3 instead of Xbox 360");
+  gpad_console_hud = rb("gpad_console_hud", true, ARCHIVE, "Console style HUD: safe area margins, d-pad items in a cross");
+  gpad_hud_safe_area = rf("gpad_hud_safe_area", 0.9f, 0.5f, 1.0f, ARCHIVE, "Console style HUD: safe area (1 = screen edges)");
   gpad_sensitivity = rf("gpad_sensitivity", 1.0f, 0.1f, 5.0f, ARCHIVE, "Controller look sensitivity");
   gpad_deadzone = rf("gpad_deadzone", 0.2f, 0.0f, 0.9f, ARCHIVE, "Controller stick deadzone");
   gpad_aim_strength = rf("gpad_aim_strength", 0.75f, 0.0f, 1.0f, ARCHIVE,
@@ -775,14 +796,285 @@ void apply_look(const Aim& aa, int buttons, float dt, float& pitch, float& yaw) 
 }
 
 // --- glyphs
-// The SP zones don't ship the console button materials, so hints get coloured button names instead.
 // Key_KeynumToString(key, translate=1) returns these from the localized key name table; the hint code
-// falls back to the raw text when it's not a localization key.
-constexpr const char* kButtonNames[] = {
+// falls back to the raw text when it's not a localization key. They start as coloured button names; where the
+// build supports text icons, make_glyphs() rewrites them in place into icons.
+char buttonText[START + 1][16] = {
   "^2A^7", "^1B^7", "^5X^7", "^3Y^7", "LB", "RB", "LT", "RT", "L3", "R3",
   "D-Pad Up", "D-Pad Down", "D-Pad Left", "D-Pad Right", "Back", "Start",
 };
-static_assert(std::size(kButtonNames) == START + 1);
+
+// IW4 text draws "^" 0x01 w h <Material*> as an inline icon; w/h are (size-16)/32 font heights, so 0x30 = one line.
+//   x86 (depot exe): R_TextWidth 0x5080f0 skips 7 bytes, the draw 0x5377d0 reads the 4-byte pointer at +3.
+//   MW2 x64: the width code (0x140009c90) skips 11 bytes, the draw (inlined in 0x1400433b0) reads 8 bytes at +3.
+// The SP zones don't ship the console button materials, so each glyph is a copy of the stock "white" material whose
+// image holds our own texture (glyphs/glyphs.bin: Xbox 360 and PS3 sets, gpad_ps_glyphs picks one). Strings can't hold a 0 byte, so the
+// copies live below 4 GB at an address whose bytes are all nonzero. An x64 pointer always has zero high bytes, so
+// there the string holds the low 4 bytes plus a 01 01 01 01 marker (never a real pointer's high half), and a stub at
+// the draw's pointer read (Game::iconRead) keeps only the low half when it sees the marker.
+const unsigned char kGlyphPixels[] = {
+#embed "../glyphs/glyphs.bin"
+};
+constexpr int kGlyphSets = 2;  // 0: Xbox 360, 1: PS3 (glyphs/gen.py)
+constexpr int kGlyphCount = START + 2, GLYPH_DPAD = START + 1;  // per set: the buttons, then the whole d-pad
+struct Glyph { char w, h; uint8_t* material; };  // w/h: text units, the draw centers the icon on the line
+Glyph glyphs[kGlyphSets][kGlyphCount];
+char dpadText[16];  // the whole d-pad glyph (console_hud), written with buttonText by show_glyph_set
+constexpr int ASSET_TYPE_MATERIAL = 5;
+// Material / MaterialTextureDef / GfxImage (checked at runtime on "white" before anything is copied). IW4: IW4x's
+// structs; IW5 (OpenAssetTools IW5_Assets.h) has stateBitsEntry[54] instead of 48 and a subMaterials pointer at the end.
+// x64 is the same with 8-byte pointers. TextureDef and GfxImage are the same in both.
+constexpr int P = sizeof(void*);
+struct MatLayout { int size, texCount, texTable; };
+constexpr MatLayout kIw4Mat = P == 8 ? MatLayout{0x78, 0x50, 0x60} : MatLayout{0x60, 0x48, 0x54};
+constexpr MatLayout kIw5Mat = P == 8 ? MatLayout{0x88, 0x56, 0x68} : MatLayout{0x68, 0x4E, 0x58};
+constexpr int kTexDefSize = P == 8 ? 0x10 : 0xC, kTexDefImage = 8;
+constexpr int kImgSize = P == 8 ? 0x28 : 0x20, kImgWidth = P == 8 ? 0x18 : 0x14, kImgName = P == 8 ? 0x20 : 0x1C;
+
+bool readable(const void* p, size_t n) {
+  MEMORY_BASIC_INFORMATION mbi;
+  return p && VirtualQuery(p, &mbi, sizeof mbi) && mbi.State == MEM_COMMIT && !(mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD)) &&
+         static_cast<const uint8_t*>(p) + n <= static_cast<uint8_t*>(mbi.BaseAddress) + mbi.RegionSize;
+}
+
+void log_hex(const char* what, const void* p, int n) {  // for layout checks that fail on a build
+  if (!readable(p, n)) { logmsg("%s %p: unreadable", what, p); return; }
+  for (int o = 0; o < n; o += 16) {
+    char line[64], *q = line;
+    for (int i = 0; i < 16 && o + i < n; i++) q += sprintf(q, "%02x ", static_cast<const uint8_t*>(p)[o + i]);
+    logmsg("%s +%02x: %s", what, o, line);
+  }
+}
+
+bool in_d3d9(void* obj) {  // obj's vtable lies in d3d9.dll (DXVK's included), i.e. it's a live D3D object
+  HMODULE m; wchar_t path[MAX_PATH];
+  if (!obj || !GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                                  *reinterpret_cast<LPCWSTR*>(obj), &m)) return false;
+  GetModuleFileNameW(m, path, MAX_PATH);
+  return wcsstr(_wcslwr(path), L"d3d9");
+}
+
+void* near_jump(uintptr_t addr, void* target);
+
+// x64: `mov rcx,[r8+3]; cvtdq2ps xmm6,xmm6` (7 bytes) -> jmp to a stub that does the same, but zero-extends the
+// low half when the high half is our marker. Flags it clobbers are rewritten by the next `add` before any use.
+bool patch_icon_read() {
+  if (P == 4) return true;
+  if (!g->iconRead) return false;
+  auto p = at<uint8_t*>(g->iconRead);
+  static const uint8_t kOrig[] = { 0x49, 0x8B, 0x48, 0x03, 0x0F, 0x5B, 0xF6 };
+  if (memcmp(p, kOrig, sizeof kOrig)) { logmsg("glyphs: icon read does not match"); return false; }
+  auto stub = static_cast<uint8_t*>(near_jump(uintptr_t(p), nullptr));  // a page near the exe; its jmp is overwritten
+  if (!stub) return false;
+  static const uint8_t kStub[] = {
+    0x49, 0x8B, 0x48, 0x03,                          // mov rcx, [r8+3]
+    0x41, 0x81, 0x78, 0x07, 0x01, 0x01, 0x01, 0x01,  // cmp dword [r8+7], 0x01010101
+    0x75, 0x02,                                      // jne +2
+    0x89, 0xC9,                                      // mov ecx, ecx
+    0x0F, 0x5B, 0xF6,                                // cvtdq2ps xmm6, xmm6
+    0xFF, 0x25, 0, 0, 0, 0,                          // jmp [rip+0] -> back
+  };
+  memcpy(stub, kStub, sizeof kStub);
+  *reinterpret_cast<uint8_t**>(stub + sizeof kStub) = p + sizeof kOrig;
+  uint8_t jmp[sizeof kOrig] = { 0xE9, 0, 0, 0, 0, 0x90, 0x90 };
+  *reinterpret_cast<int32_t*>(jmp + 1) = int32_t(stub - (p + 5));
+  DWORD old;
+  VirtualProtect(p, sizeof jmp, PAGE_EXECUTE_READWRITE, &old);
+  memcpy(p, jmp, sizeof jmp);  // ponytail: not atomic vs the render thread; a torn read needs a draw in these ns
+  VirtualProtect(p, sizeof jmp, old, &old);
+  FlushInstructionCache(GetCurrentProcess(), p, sizeof jmp);
+  return true;
+}
+
+// MW2 x64 R_TextWidth(text, maxChars, font) measures "^\x01..." as 14 letters, so text after an icon (the weapon
+// name after "Press X to pick up") moves right. This is the same function (0x140009b30) plus the icon case the
+// draw and word-wrap code have. Font: pixelHeight +8, glyphCount +0xC, glyphs +0x20 ({u16 letter; .. u8 dx at +4}, 0x18).
+// MW3 x64 has two such functions (0x1401b80f0 and 0x1401b8020); IW5 colour codes go up to ^; and its icons are
+// named: "^" 1|2 w h len name[len].
+using ReadChar_t = unsigned (*)(const char** text, int, int);  // MW2's takes 2 arguments; the 3rd is ignored there
+int text_width(const char* text, int maxChars, uint8_t* font, int readArg) {
+  auto readChar = at<ReadChar_t>(g->readChar);
+  const char lastColor = g->iw5 ? ';' : '9';
+  // Font_s {name, pixelHeight, glyphCount, material, glowMaterial, glyphs}
+  constexpr int kHeight = P == 8 ? 8 : 4, kCount = P == 8 ? 0xC : 8, kGlyphs = P == 8 ? 0x20 : 0x14;
+  auto glyphs = field<uint8_t*>(font, kGlyphs);
+  int count = field<int>(font, kCount), lineW = 0, maxW = 0;
+  if (maxChars <= 0) maxChars = 0x7fffffff;
+  for (int n = 0; *text && n < maxChars;) {
+    unsigned c = readChar(&text, 0, readArg);
+    if (c == '\r' || c == '\n') { lineW = 0; continue; }
+    if (c == '^' && *text >= '0' && *text <= lastColor) { text++; continue; }
+    if (c == '^' && (*text == 1 || *text == 2)) {  // icon: same size as the draw, then skip marker, w, h, pointer/name
+      int w = (text[1] - 16) * field<int>(font, kHeight) + 16;
+      lineW += (w + (w >> 31 & 31)) >> 5;
+      text += g->iw5 ? 4 + text[3] : 3 + P;
+    } else {
+      uint8_t* glyph = glyphs + 0x150;
+      if (c - 0x20 < 0x60) glyph = glyphs + (c - 0x20) * 0x18;
+      else for (int lo = 0x60, hi = count - 1; lo <= hi;) {
+        int mid = (lo + hi) / 2;
+        unsigned letter = field<uint16_t>(glyphs + mid * 0x18, 0);
+        if (letter == c) { glyph = glyphs + mid * 0x18; break; }
+        if (letter < c) lo = mid + 1; else hi = mid - 1;
+      }
+      n++;
+      lineW += glyph[4];
+    }
+    if (lineW > maxW) maxW = lineW;
+  }
+  return maxW;
+}
+
+int text_width4(const char* text, int maxChars, uint8_t* font, int readArg) { return text_width(text, maxChars, font, readArg); }
+int text_width3(const char* text, int maxChars, uint8_t* font) { return text_width(text, maxChars, font, 0); }
+
+bool replace_text_width() {
+  // entries as in the exes: MW2 x64 0x140009b30, MW3 x64 0x1401b80f0, 0x1401b8020
+  static const uint8_t kEntries[][9] = {
+    { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x55, 0x56, 0x41, 0x54 },
+    { 0x48, 0x89, 0x6C, 0x24, 0x20, 0x48, 0x89, 0x4C, 0x24 },
+    { 0x48, 0x89, 0x6C, 0x24, 0x18, 0x48, 0x89, 0x74, 0x24 },
+    { 0x51, 0x53, 0x57, 0x33, 0xDB, 0x33, 0xFF, 0x39, 0x5C },  // MW3 x86 0x4e9350
+    { 0x51, 0x53, 0x55, 0x33, 0xED, 0x33, 0xDB, 0x39, 0x6C },  // MW2 x86 AlterWare 0x508960
+  };
+  for (int k = 0; k < 2; k++) {
+    if (!g->textWidth[k]) continue;
+    auto p = at<uint8_t*>(g->textWidth[k]);
+    bool known = false;
+    for (auto& e : kEntries) known |= !memcmp(p, e, sizeof e);
+    if (!known) { logmsg("glyphs: text width %llx does not match", (unsigned long long)g->textWidth[k]); return false; }
+    void* fn = k == 0 ? reinterpret_cast<void*>(text_width4) : reinterpret_cast<void*>(text_width3);
+    auto stub = static_cast<uint8_t*>(near_jump(uintptr_t(p), fn));
+    if (!stub) return false;
+    uint8_t jmp[5] = { 0xE9 };
+    *reinterpret_cast<int32_t*>(jmp + 1) = int32_t(stub - (p + 5));
+    DWORD old;
+    VirtualProtect(p, 5, PAGE_EXECUTE_READWRITE, &old);
+    memcpy(p, jmp, 5);
+    VirtualProtect(p, 5, old, &old);
+    FlushInstructionCache(GetCurrentProcess(), p, 5);
+  }
+  return true;
+}
+
+// IW5 text draw: Material_RegisterHandle(name) for an icon; our names "iwpad00".."iwpad31" are glyphs[0..31].
+char glyphNames[kGlyphSets * kGlyphCount][8];
+using MaterialLookup_t = uint8_t* (*)(const char* name, int);
+uintptr_t iconLookupNext;  // what the hooked call called before (the game's lookup, or a host's hook of it)
+uint8_t* icon_lookup(const char* name, int arg) {
+  if (!strncmp(name, "iwpad", 5) && name[5] >= '0' && name[5] <= '9' && name[6] >= '0' && name[6] <= '9' && !name[7]) {
+    int i = (name[5] - '0') * 10 + name[6] - '0';
+    if (i < kGlyphSets * kGlyphCount && glyphs[0][i].material) return glyphs[0][i].material;
+  }
+  return reinterpret_cast<MaterialLookup_t>(iconLookupNext)(name, arg);
+}
+bool patch_call(uintptr_t site, uintptr_t expected, void* hook);
+// Hooks the icon lookup call whatever it calls now: iw5-mod hooks the same call (MW3 x86), so our lookup passes the
+// names it doesn't know on to iw5-mod's function instead of the game's.
+bool patch_icon_lookup() {
+  auto p = at<uint8_t*>(g->iconLookupCall);
+  if (p[0] != 0xE8) { logmsg("glyphs: icon lookup call %llx not a call", (unsigned long long)g->iconLookupCall); return false; }
+  iconLookupNext = uintptr_t(p + 5 + *reinterpret_cast<int32_t*>(p + 1));
+  if (iconLookupNext != g->iconLookup + slide) logmsg("glyphs: icon lookup already hooked (%p), chaining", reinterpret_cast<void*>(iconLookupNext));
+  return patch_call(g->iconLookupCall, iconLookupNext - slide, reinterpret_cast<void*>(icon_lookup));
+}
+
+void make_glyphs() {
+  if (!g->textIcons) return;
+  using Find_t = uint8_t* (*)(int type, const char* name, int createDefault);
+  uint8_t* white = at<Find_t>(g->findAsset)(ASSET_TYPE_MATERIAL, "white", 0);
+  const MatLayout& ml = g->iw5 ? kIw5Mat : kIw4Mat;
+  if (!white || strcmp(field<const char*>(white, 0), "white") || field<char>(white, ml.texCount) != 1) {
+    logmsg("glyphs: white material not as expected, keeping button names");
+    log_hex("white material", white, ml.size + 8);
+    return;
+  }
+  uint8_t* texDef = field<uint8_t*>(white, ml.texTable);
+  uint8_t* image = readable(texDef, kTexDefSize) ? field<uint8_t*>(texDef, kTexDefImage) : nullptr;
+  auto imgName = readable(image, kImgSize) ? field<const char*>(image, kImgName) : nullptr;
+  if (!readable(imgName, 7) || (strcmp(imgName, "$white") && strcmp(imgName, "white"))) {  // code images: "$white"
+    logmsg("glyphs: white image not as expected, keeping button names");
+    log_hex("white material", white, ml.size + 8);
+    log_hex("texture def", texDef, 0x20);
+    log_hex("image", image, 0x40);
+    return;
+  }
+  auto base = field<IDirect3DBaseTexture9*>(image, 0);
+  if (!in_d3d9(base)) { logmsg("glyphs: white image has no D3D texture, keeping button names"); return; }
+  IDirect3DDevice9* dev;
+  if (FAILED(base->GetDevice(&dev))) { logmsg("glyphs: no device"); return; }
+  D3DDEVICE_CREATION_PARAMETERS cp{};
+  dev->GetCreationParameters(&cp);
+  logmsg("glyphs: device flags 0x%lx", cp.BehaviorFlags);
+
+  uint8_t* mem = nullptr;
+  for (uintptr_t b = 0x3F3F0000; !mem && b >= 0x30300000; b -= 0x01010000)
+    mem = static_cast<uint8_t*>(VirtualAlloc(reinterpret_cast<void*>(b), 0x10000, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE));
+  if (!mem) { logmsg("glyphs: no zero-free address, keeping button names"); dev->Release(); return; }
+  if (P == 8 && !g->iw5 && uintptr_t(mem) >> 32) { logmsg("glyphs: memory above 4 GB, keeping button names"); dev->Release(); return; }
+  bool drawOk = g->iw5 ? patch_icon_lookup() : patch_icon_read();
+  if (!drawOk) { logmsg("glyphs: draw not patched, keeping button names"); dev->Release(); return; }
+  if (!replace_text_width()) logmsg("glyphs: text width not replaced, text after an icon may sit too far right");
+
+  int made = 0;
+  const unsigned char* px = kGlyphPixels;
+  for (int i = 0; i < kGlyphSets * kGlyphCount; i++) {
+    Glyph& gl = glyphs[0][i];
+    gl.w = char(px[0]); gl.h = char(px[1]);
+    int tw = px[2], th = px[3];
+    const unsigned char* bgra = px + 4;
+    px = bgra + tw * th * 4;
+    IDirect3DTexture9* tex = nullptr;
+    if (FAILED(dev->CreateTexture(tw, th, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &tex, nullptr)) &&
+        FAILED(dev->CreateTexture(tw, th, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex, nullptr)))
+      { logmsg("glyphs: CreateTexture failed"); break; }
+    D3DLOCKED_RECT lr;
+    if (FAILED(tex->LockRect(0, &lr, nullptr, 0))) { tex->Release(); logmsg("glyphs: LockRect failed"); break; }
+    for (int y = 0; y < th; y++) memcpy(static_cast<uint8_t*>(lr.pBits) + y * lr.Pitch, bgra + y * tw * 4, tw * 4);
+    tex->UnlockRect(0);
+
+    // one 0x100 slot per glyph at +0x1010: material, texture def, image; address bytes 10, 10+i, base, base
+    uint8_t* m = mem + 0x1010 + i * 0x100;
+    uint8_t *def = m + 0xA0, *img = m + 0xB0;
+    memcpy(m, white, ml.size);
+    memcpy(def, texDef, kTexDefSize);
+    memcpy(img, image, kImgSize);
+    field<void*>(img, 0) = tex;
+    field<uint16_t>(img, kImgWidth) = uint16_t(tw);
+    field<uint16_t>(img, kImgWidth + 2) = uint16_t(th);
+    field<uint16_t>(img, kImgWidth + 4) = 1;
+    field<const char*>(img, kImgName) = i % kGlyphCount == GLYPH_DPAD ? "DPAD" : kPadKeyName[i % kGlyphCount];
+    field<uint8_t*>(def, kTexDefImage) = img;
+    field<uint8_t*>(m, ml.texTable) = def;
+    snprintf(glyphNames[i], sizeof glyphNames[i], "iwpad%02d", i);
+    field<const char*>(m, 0) = glyphNames[i];
+    gl.material = m;
+    made++;
+  }
+  dev->Release();
+  logmsg("glyphs: %d button icons at %p", made, static_cast<void*>(mem));
+}
+
+// Points the localized key names at one glyph set; called again whenever gpad_ps_glyphs changes.
+void show_glyph_set(int set) {
+  for (int i = 0; i < kGlyphCount; i++) {
+    auto& gl = glyphs[set][i];
+    if (!gl.material) return;  // make_glyphs didn't run or failed: the button names stay
+    // "^7" first: icons are tinted by the current text colour, and hints colour the key (a blue X came out green)
+    char* s = i == GLYPH_DPAD ? dpadText : buttonText[i];
+    memcpy(s, "^7^\x01", 4);
+    s[4] = gl.w; s[5] = gl.h;
+    if (g->iw5) {  // by name: "iwpadNN", found by icon_lookup
+      s[6] = 7;
+      memcpy(s + 7, glyphNames[set * kGlyphCount + i], 8);
+      continue;
+    }
+    uint32_t lo = uint32_t(uintptr_t(gl.material));
+    memcpy(s + 6, &lo, 4);
+    if (P == 8) memset(s + 10, 1, 4);
+    s[6 + P] = 0;
+  }
+}
 
 // The engine's key name table ({ const char* name; int keynum; } x 95) sits right before the localized one
 // in all 5 builds. Nothing uses its 16 AUX1-AUX16 entries, so they become the console keys: names for
@@ -795,7 +1087,7 @@ void rename_aux(const char** table, bool localized) {
     int b = k - K_AUX1;
     DWORD old;
     VirtualProtect(&table[i * 2], 2 * sizeof(void*), PAGE_READWRITE, &old);
-    table[i * 2] = localized ? kButtonNames[b] : kPadKeyName[b];
+    table[i * 2] = localized ? buttonText[b] : kPadKeyName[b];
     k = kPadKey[b];
     VirtualProtect(&table[i * 2], 2 * sizeof(void*), old, &old);
   }
@@ -984,6 +1276,8 @@ constexpr MenuRow kControllerRows[] = {
   // percent of console aim assist (100% = console) and of stick travel (console: 20%)
   {"Aim Assist Strength", nullptr, "gpad_aim_strength", 0.0f, 1.0f, 0.75f, 0.05f, &gpad_aim_strength, 100, "%"},
   {"Stick Deadzone", nullptr, "gpad_deadzone", 0.0f, 0.9f, 0.2f, 0.05f, &gpad_deadzone, 100, "%"},
+  {"PlayStation Icons", nullptr, "gpad_ps_glyphs"},
+  {"Console Style HUD", nullptr, "gpad_console_hud"},
   {"Enable Controller", nullptr, "gpad_enabled"},
   {"Reset Controller Settings", nullptr, "gpad_reset"},
 };
@@ -995,7 +1289,6 @@ const char** find_localized(const char* name) {
   return g->findAsset ? at<DB_FindXAssetHeader_t>(g->findAsset)(ASSET_TYPE_LOCALIZE, name, 0) : nullptr;
 }
 
-template <class T> T& field(uint8_t* p, int off) { return *reinterpret_cast<T*>(p + off); }
 bool text_is(uint8_t* item, int off, const char* s) { auto t = field<const char*>(item, off); return t && !strcmp(t, s); }
 
 // A row is every item level with its label (MW2: value + label; MW3 adds a selection bar shadow), minus the
@@ -1014,11 +1307,11 @@ int row_items(uint8_t** src, int count, uint8_t* label, uint8_t** out) {
 // Look are separate menus that both stay loaded, so each gets its own items array; the copies only point into that
 // menu's zone.
 struct LookPatch {
-  uint8_t* menu; uint8_t* items[80];
-  alignas(8) uint8_t copies[32][MAX_ITEM_SIZE];
-  float sliders[3][8];
-  uint8_t *bars[4], *barSliders[4]; int nBars;  // MW3 slider highlight bars and their sliders
-  uint8_t *values[3], *valueSliders[3]; const MenuRow* valueRows[3]; char valueText[3][16]; float last[3]; int nValues;  // slider values
+  uint8_t* menu; uint8_t* items[112];
+  alignas(8) uint8_t copies[64][MAX_ITEM_SIZE];
+  float sliders[4][8];
+  uint8_t *bars[5], *barSliders[5]; int nBars;  // MW3 slider highlight bars and their sliders
+  uint8_t *values[4], *valueSliders[4]; const MenuRow* valueRows[4]; char valueText[4][32]; float last[4]; int nValues;  // slider values
 };
 LookPatch lookPatches[4];  // frontend and in-game Look (MW3: pc_options_look_ingame), plus reloads
 
@@ -1132,8 +1425,8 @@ void patch_look(uint8_t* look) {
   for (int k = 0; rowName && k < yesNoRowN; k++)
     if (yesNoRow[k] != yesNo && text_is(yesNoRow[k], 0, rowName) && field<uint8_t*>(yesNoRow[k], L.visibleExp))
       shadow = yesNoRow[k];
-  int need = 1 + int(std::size(kControllerRows)) * (sliderRowN > yesNoRowN ? sliderRowN : yesNoRowN) + (shadow ? 4 : 0) + 3;
-  if (!sliderRowN || !yesNoRowN || !divider || need > 32 || count + need > 80) {
+  int need = 1 + int(std::size(kControllerRows)) * (sliderRowN > yesNoRowN ? sliderRowN : yesNoRowN) + (shadow ? 5 : 0) + 4;
+  if (!sliderRowN || !yesNoRowN || !divider || need > 64 || count + need > 112) {
     failed = look;
     logmsg("menu patch: pc_options_look items not found");
     return;
@@ -1141,7 +1434,7 @@ void patch_look(uint8_t* look) {
   // the rows go right after Look's last row in the item list, which is also the d-pad order
   int at = 0;
   for (int j = 0; j < count; j++) if (std::fabs(field<float>(src[j], L.rectY) - lastRow) < 5) at = j + 1;
-  uint8_t *added[32], *beforeSlider[1];
+  uint8_t *added[40], *beforeSlider[1];
   int c = 0, nAdded = 0, nBefore = 0, s = 0;
   p->nBars = p->nValues = 0;
   auto copy = [&](uint8_t* from, float dy) {  // copy of from, moved down by dy
@@ -1224,6 +1517,206 @@ void patch_look(uint8_t* look) {
   logmsg("menu patched: %s +%d controller items", field<const char*>(look, L.menuName), n - count);
 }
 
+// --- console style HUD (gpad_console_hud). The console keeps the HUD inside a TV safe area and draws the four action
+// slots on a d-pad next to the ammo counter; PC uses the whole screen and a row of slots with key labels
+// (common.ff ui/dpad.menu: slot items "slot1".."slot4", ownerdraw 171-174, each followed by its keybinding label,
+// placed by rect expressions). While on:
+// - each slot's rect expressions (ItemFloatExpression targets 0-3) are switched off and its rect set on a d-pad arm;
+// - the first label holds our whole d-pad glyph (dpadText): text expression off, visible always, moved to the front of
+//   the menu's item list so the slots draw on top of it. The other labels move off screen;
+// - slots and the d-pad fade with the ammo counter: they borrow ui/weaponinfo.menu "weaponbar_line"'s expressions,
+//   `forecolor a hudfade("weapon")` and `visible when(1)`. (Stock slots never fade; hudfade("dpad") never runs out on PC.)
+// Off: everything saved is put back and the game places the items again.
+constexpr int ASSET_TYPE_MENU = 0x1A;  // IW4 and IW5
+// The d-pad sits in the compass, like the console (there the ring is the d-pad). The items take the compass items'
+// alignment (ui/compassv2.menu "Pass1": rect -110 -79 130 130, align 10 10 = bottom right of the safe area, in a menu
+// at 2 -16), so they follow it at any resolution. Ring centre: (2 - 110 + 65, -16 - 79 + 65) = (-43, -30); item rects
+// are relative to the dpad menu (exp rect X 56, Y -14), so the centre is (-99, -16) in item units.
+// kDpadX/Y: top left of a slot's 28x28 box at that centre; kArm: how far out each slot sits, on the glyph's arms.
+// +3/-2: measured on the Deck against the drawn ring (in these units, so it holds at any resolution).
+constexpr float kSlotSize = 28, kDpadX = -99 + 3 - kSlotSize / 2, kDpadY = -16 - 2 - kSlotSize / 2, kArm = 35;  // console: items just outside the d-pad
+// MW3's up slot (night vision) sits closer in: at kArm it lands on the compass's top edge. Set on the Deck.
+constexpr float kArmUpMw3 = 30;
+uint8_t compassAlign[2];  // horzAlign, vertAlign of the compass item (rectDef_s: x, y, w, h, then the two bytes)
+// The d-pad glyph is text: at its biggest icon size it's ~3.5 lines, so its size comes from the label's textscale
+// (stock 0.25: ~50 px on the Deck). Its baseline sits kDpadBaseline under the d-pad centre (set on the Deck, scales with it).
+constexpr float kDpadScale = 0.3f, kDpadBaseline = 6;  // 0.3: about the art's own 64 px on the Deck
+// itemDef textscale: type, dataType, alignment, fontEnum, textAlignMode, textalignx, textaligny, textscale (IW4)
+int text_scale_off() { return g->menus->type + 7 * 4; }
+int text_align_off() { return g->menus->type + 5 * 4; }  // textalignx, textaligny
+// Slot counts: stock textalignx 6 / textaligny -10 put them right of the icon; the console has them under it
+// (values checked on the Deck).
+constexpr float kStockCountAlign[2] = {6, -10}, kCountAlign[2] = {-10, 0};
+struct HudItem { uint8_t* item; int expCount; float x, y; uint8_t *exps, *text, *textExp, *visibleExp; bool label; float scale; uint8_t align[2]; };
+HudItem hudItems[8];
+int nHudItems;
+uint8_t *dpadHolder, *weaponFade, *alwaysVisible;
+// ItemFloatExpression {int target; Statement_s*} array; IW4 itemDef has visibleExp, disabledExp, textExp in a row.
+int exps_off(int countOff) { return (countOff + 4 + P - 1) & ~(P - 1); }
+int text_exp_off() { return g->menus->visibleExp + 2 * P; }
+
+// Whole HUD menus moved while on, like the console: the stance figure leaves the compass centre (where the d-pad goes)
+// for a gap between the ammo number and the ring, and the ammo block moves left to make that gap. menuDef_t starts
+// with windowDef_t like itemDef, so its rect x/y sit at rectY - 4 / rectY. Original values checked before moving.
+// ponytail: offsets measured on the Deck against a console screenshot; tune with screenshots.
+struct MenuMove { const char* name; float x, y, dx, dy; uint8_t* menu; bool client; };  // client: rectClient moves too
+// weaponinfo listed twice: MW2 puts it at y -20, MW3 at -16 (the other entry logs "not where expected" once).
+MenuMove menuMoves[] = { {"stance", -84, -76, -62, -7}, {"weaponinfo", 2, -20, -30, 0}, {"weaponinfo", 2, -16, -30, 0} };
+// The stance figure (ui/stance.menu "chRect", one expression: forecolor a hudfade("stance"), which never runs out on PC)
+// also takes the weapon fade while on.
+uint8_t *stanceItem, *stanceExps;
+
+// Logs a menu's rect and each item's name, rect, alignment, expressions and text placement (once per menu).
+void log_menu(uint8_t* menu) {
+  auto& L = *g->menus;
+  auto r = [&](uint8_t* w, int y) { return std::array<float, 4>{field<float>(w, y - 4), field<float>(w, y), field<float>(w, y + 4), field<float>(w, y + 8)}; };
+  auto mr = r(menu, L.menuName + L.rectY);
+  logmsg("menu %s rect %g %g %g %g align %d %d, %d items", field<const char*>(menu, L.menuName), mr[0], mr[1], mr[2], mr[3],
+         menu[L.menuName + L.rectY + 12], menu[L.menuName + L.rectY + 13], field<int>(menu, L.itemCount));
+  for (int k = 0; k < field<int>(menu, L.itemCount); k++) {
+    auto it = field<uint8_t**>(menu, L.items)[k];
+    auto ir = r(it, L.rectY);
+    auto exps = field<uint8_t*>(it, exps_off(L.floatExpCount));
+    int n = field<int>(it, L.floatExpCount);
+    char t[64] = "";
+    for (int e = 0, o = 0; e < n && e < 8 && exps; e++) o += snprintf(t + o, sizeof t - o, "%d ", field<int>(exps, e * 2 * P));
+    auto name = field<const char*>(it, 0);
+    logmsg("  item %d %s type %d rect %g %g %g %g align %d %d exps [%s] vis %p textExp %p scale %g textalign %g %g", k,
+           name ? name : "-", field<int>(it, L.type), ir[0], ir[1], ir[2], ir[3], it[L.rectY + 12], it[L.rectY + 13], t,
+           field<void*>(it, L.visibleExp), field<void*>(it, text_exp_off()), field<float>(it, text_scale_off()),
+           field<float>(it, text_align_off()), field<float>(it, text_align_off() + 4));
+  }
+}
+
+bool find_dpad_items() {
+  nHudItems = 0, dpadHolder = nullptr;
+  auto& L = *g->menus;
+  auto find = at<uint8_t* (*)(int, const char*, int)>(g->findAsset);
+  static bool logged = false;
+  if (!logged)
+    for (auto n : {"dpad", "weaponinfo", "compassv2", "stance"})
+      if (auto m = find(ASSET_TYPE_MENU, n, 0); m && text_is(m, L.menuName, n)) logged = true, log_menu(m);
+  auto dpad = find(ASSET_TYPE_MENU, "dpad", 0), wi = find(ASSET_TYPE_MENU, "weaponinfo", 0);
+  if (!dpad || !text_is(dpad, L.menuName, "dpad") || !wi || !text_is(wi, L.menuName, "weaponinfo") || field<int>(wi, L.itemCount) < 1)
+    { logmsg("console hud: dpad/weaponinfo menu not found"); return false; }
+  auto compass = find(ASSET_TYPE_MENU, "compassv2", 0);
+  uint8_t* pass1 = nullptr;
+  if (compass && text_is(compass, L.menuName, "compassv2"))
+    for (int k = 0; k < field<int>(compass, L.itemCount); k++)
+      if (auto it = field<uint8_t**>(compass, L.items)[k]; text_is(it, 0, "Pass1")) pass1 = it;
+  if (!pass1 || !pass1[L.rectY + 12]) { logmsg("console hud: compass Pass1 not found"); return false; }
+  memcpy(compassAlign, pass1 + L.rectY + 12, 2);
+  auto line = field<uint8_t**>(wi, L.items)[0];
+  weaponFade = field<uint8_t*>(line, exps_off(L.floatExpCount));
+  alwaysVisible = field<uint8_t*>(line, L.visibleExp);
+  if (field<int>(line, L.floatExpCount) != 1 || !weaponFade || field<int>(weaponFade, 0) != 8 || !alwaysVisible)  // 8: forecolor a
+    { logmsg("console hud: weaponbar_line not as expected"); return false; }
+
+  auto items = field<uint8_t**>(dpad, L.items);
+  int count = field<int>(dpad, L.itemCount);
+  // slot N is the item named "slotN", its label the item after it. Arms: 1 up, 2 down, 3 left, 4 right.
+  static const float kDir[4][2] = { {0, -1}, {0, 1}, {-1, 0}, {1, 0} };
+  for (int j = 0; j + 1 < count && nHudItems < 8; j++) {
+    auto name = field<const char*>(items[j], 0);
+    if (!name || strncmp(name, "slot", 4) || name[4] < '1' || name[4] > '4' || name[5]) continue;
+    int n = name[4] - '1';
+    for (int k : {j, j + 1}) {
+      bool label = k != j, holder = label && !dpadHolder;
+      if (holder) dpadHolder = items[k];
+      float x = label ? (holder ? kDpadX + kSlotSize / 2 : -10000) : kDpadX + kDir[n][0] * kArm;
+      float armY = n == 0 && g->iw5 ? kArmUpMw3 : kArm;
+      float y = label ? (holder ? kDpadY + kSlotSize / 2 + kDpadBaseline : -10000) : kDpadY + kDir[n][1] * armY;
+      auto it = items[k];
+      hudItems[nHudItems++] = {it, field<int>(it, L.floatExpCount), x, y, field<uint8_t*>(it, exps_off(L.floatExpCount)),
+                               field<uint8_t*>(it, L.text), field<uint8_t*>(it, text_exp_off()), field<uint8_t*>(it, L.visibleExp), label,
+                               field<float>(it, text_scale_off()), {it[L.rectY + 12], it[L.rectY + 13]}};
+    }
+  }
+  if (!dpadHolder) { logmsg("console hud: no dpad slots"); return false; }
+  for (auto& m : menuMoves) {
+    auto menu = find(ASSET_TYPE_MENU, m.name, 0);
+    int y = L.menuName + L.rectY, cy = L.menuName + L.rectClientY;  // menuDef_t: windowDef_t starts at menuName
+    if (menu && text_is(menu, L.menuName, m.name) && field<float>(menu, y - 4) == m.x && field<float>(menu, y) == m.y) {
+      m.menu = menu;
+      m.client = field<float>(menu, cy - 4) == m.x && field<float>(menu, cy) == m.y;
+    }
+    else logmsg("console hud: %s menu not where expected, left in place", m.name);
+  }
+  if (auto st = menuMoves[0].menu; st && field<int>(st, L.itemCount) > 0) {
+    auto it = field<uint8_t**>(st, L.items)[0];
+    if (text_is(it, 0, "chRect") && field<int>(it, L.floatExpCount) == 1) stanceItem = it, stanceExps = field<uint8_t*>(it, exps_off(L.floatExpCount));
+  }
+  if (!stanceItem) logmsg("console hud: stance item not as expected, it won't fade");
+  if (field<float>(dpadHolder, text_scale_off()) != 0.25f) { logmsg("console hud: label textscale not where expected"); return false; }
+  std::swap(items[0], *std::find(items, items + count, dpadHolder));  // draws first, under the slots
+  logmsg("console hud: %d dpad items", nHudItems);
+  return true;
+}
+
+// An "active" action slot (night vision on, the slot's weapon in hand) draws brightened at alpha 1, whatever the item's
+// forecolor alpha, so it stayed up after the weapon fade hid everything else. While on, the store is nopped and the
+// slot keeps the fade's alpha (still brightened).
+void slot_alpha(bool on) {
+  // x64: mov dword [rsp+0x7c], 1.0; x86 (all three builds): fld1; fstp dword [esp+0x2c]
+  static const uint8_t kStore64[8] = {0xC7, 0x44, 0x24, 0x7C, 0x00, 0x00, 0x80, 0x3F}, kStore86[6] = {0xD9, 0xE8, 0xD9, 0x5C, 0x24, 0x2C};
+  const uint8_t* kStore = P == 8 ? kStore64 : kStore86;
+  constexpr int n = P == 8 ? 8 : 6;
+  static int state = -1;  // -1 unchecked, 0 stock, 1 nopped, 2 bytes not as expected
+  if (!g->slotAlpha || state == 2 || state == on) return;
+  auto p = at<uint8_t*>(g->slotAlpha);
+  if (state == -1 && memcmp(p, kStore, n)) { state = 2; logmsg("console hud: slot alpha store not found"); return; }
+  DWORD old;
+  VirtualProtect(p, n, PAGE_EXECUTE_READWRITE, &old);
+  if (on) memset(p, 0x90, n); else memcpy(p, kStore, n);
+  VirtualProtect(p, n, old, &old);
+  FlushInstructionCache(GetCurrentProcess(), p, n);
+  state = on;
+}
+
+void console_hud() {
+  if (!g->safeArea[0]) return;
+  bool on = ownb(gpad_console_hud, true);
+  slot_alpha(on);
+  float area = on ? ownf(gpad_hud_safe_area, 0.9f) : 1.0f;
+  for (auto slot : g->safeArea)
+    if (auto d = *at<uint8_t**>(slot)) *reinterpret_cast<float*>(d + g->dvarValue) = area;
+
+  // retried about once a second until the HUD menus are there (they load with the level)
+  static bool found = false;
+  static int tries = 0;
+  if (!found && (tries++ % 60 || !(found = find_dpad_items()))) return;
+  auto& L = *g->menus;
+  if (stanceItem) field<uint8_t*>(stanceItem, exps_off(L.floatExpCount)) = on ? weaponFade : stanceExps;
+  for (auto& m : menuMoves)
+    if (m.menu)
+      for (int y : {L.menuName + L.rectY, L.menuName + L.rectClientY})
+        if (y == L.menuName + L.rectY || m.client) field<float>(m.menu, y - 4) = m.x + on * m.dx, field<float>(m.menu, y) = m.y + on * m.dy;
+  for (int k = 0; k < nHudItems; k++) {
+    auto& h = hudItems[k];
+    field<int>(h.item, L.floatExpCount) = on ? 1 : h.expCount;
+    field<uint8_t*>(h.item, exps_off(L.floatExpCount)) = on ? weaponFade : h.exps;
+    if (h.item == dpadHolder) {
+      field<uint8_t*>(h.item, L.text) = on ? reinterpret_cast<uint8_t*>(dpadText) : h.text;
+      field<uint8_t*>(h.item, text_exp_off()) = on ? nullptr : h.textExp;
+      field<uint8_t*>(h.item, L.visibleExp) = on ? alwaysVisible : h.visibleExp;
+      field<float>(h.item, text_scale_off()) = on ? kDpadScale : h.scale;
+    }
+    for (int y : {L.rectY, L.rectClientY}) memcpy(h.item + y + 12, on ? compassAlign : h.align, 2);
+    if (!on) continue;
+    for (int y : {L.rectY, L.rectClientY}) {
+      field<float>(h.item, y - 4) = h.x;
+      field<float>(h.item, y) = h.y;
+      if (!h.label) field<float>(h.item, y + 4) = field<float>(h.item, y + 8) = kSlotSize;
+    }
+  }
+  for (int k = 0; k < nHudItems; k++) {  // counts under the icons (only where the stock values are as expected)
+    auto& h = hudItems[k];
+    auto a = &field<float>(h.item, text_align_off());
+    if (!h.label && ((a[0] == kStockCountAlign[0] && a[1] == kStockCountAlign[1]) || (a[0] == kCountAlign[0] && a[1] == kCountAlign[1])))
+      memcpy(a, on ? kCountAlign : kStockCountAlign, sizeof kCountAlign);
+  }
+}
+
 void patch_menus() {
   if (!g->uiContext) return;
   auto dc = at<uint8_t*>(g->uiContext);
@@ -1238,10 +1731,11 @@ void patch_menus() {
 // {value, name} points at a copy of the stock text with the key (and its colour code) replaced, and back at the
 // stock text for keyboard/mouse. Looked up every frame because the entries are reloaded with their zones (a reloaded
 // entry holds the stock text again). Names missing from a game are skipped.
-struct PadString { const char* name; const char* key; const char* pad; const char* stock; char text[96]; };
+// The pad text is the button's key name (buttonText: an icon from the current set, or the coloured name).
+struct PadString { const char* name; const char* key; int button; const char* stock; char text[96]; };
 PadString padStrings[] = {
-  {"PLATFORM_BACK_CAPS", "ESC", "^1B"},      // MW2 options footer "BACK - ESC"
-  {"PLATFORM_BACK_SHORTCUT", "ESC", "^1B"},  // MW3 options footer "Back ESC"
+  {"PLATFORM_BACK_CAPS", "ESC", B},      // MW2 options footer "BACK - ESC"
+  {"PLATFORM_BACK_SHORTCUT", "ESC", B},  // MW3 options footer "Back ESC"
 };
 
 void swap_pad_strings() {
@@ -1249,13 +1743,12 @@ void swap_pad_strings() {
   for (auto& s : padStrings) {
     auto entry = find_localized(s.name);
     if (!entry) continue;
-    if (*entry != s.text) {
-      s.stock = *entry;
-      auto key = strstr(s.stock, s.key);
-      if (!key) continue;
-      auto cut = key - s.stock >= 2 && key[-2] == '^' ? key - 2 : key;
-      snprintf(s.text, sizeof s.text, "%.*s%s%s", int(cut - s.stock), s.stock, s.pad, key + strlen(s.key));
-    }
+    if (*entry != s.text) s.stock = *entry;
+    // rebuilt every frame: buttonText changes with the glyph set
+    auto key = strstr(s.stock, s.key);
+    if (!key) continue;
+    auto cut = key - s.stock >= 2 && key[-2] == '^' ? key - 2 : key;
+    snprintf(s.text, sizeof s.text, "%.*s%s^7%s", int(cut - s.stock), s.stock, buttonText[s.button], key + strlen(s.key));
     *entry = pad_in_use ? s.text : s.stock;
   }
 }
@@ -1265,6 +1758,7 @@ void hk_Com_EventLoop() {
   if (first) {
     first = false; register_dvars(); logmsg("dvars registered");
     load_our_zone();
+    make_glyphs();
 #ifndef _WIN64
     if (g->drawText) hook_draw_text();
 #endif
@@ -1288,11 +1782,14 @@ void hk_Com_EventLoop() {
   if (ownb(gpad_reset, false)) {
     *(gpad_reset + g->dvarValue) = 0;
     at<Cbuf_AddText_t>(g->cbuf)(0, "set gpad_enabled 1; set gpad_invert 0; set gpad_aim_assist 1; "
-        "set gpad_aim_strength 0.75; set gpad_sensitivity 1; set gpad_deadzone 0.2\n");
+        "set gpad_aim_strength 0.75; set gpad_sensitivity 1; set gpad_deadzone 0.2; set gpad_ps_glyphs 0; set gpad_console_hud 1\n");
     logmsg("controller settings reset");
   }
   patch_menus();
+  console_hud();
   swap_pad_strings();
+  static int glyphSet = -1;
+  if (int set = ownb(gpad_ps_glyphs, false); set != glyphSet) { show_glyph_set(set); glyphSet = set; }
   at<Com_EventLoop_t>(g->eventLoop)();
 }
 

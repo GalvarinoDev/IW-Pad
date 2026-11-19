@@ -12,7 +12,8 @@ IW-Pad was originally created for [DeckOps](https://github.com/GalvarinoDev/Deck
 - Mouse, gyro and trackpad input continue to work. Stick input adds to them.
 - Controller buttons go through the normal game binds. You can change them in the console or in `config.cfg`.
 - Controller buttons operate the menus.
-- On-screen hints show controller buttons (for example, `A`) instead of keyboard keys.
+- On-screen hints and menus show controller button icons (Xbox 360 or PlayStation 3) instead of keyboard keys.
+- A console style HUD: the HUD stays inside a TV safe area, and the D-pad items sit on a D-pad inside the compass and fade with the ammo counter.
 - The Look options screen has controller settings: sensitivity, invert look, aim assist and more. Sliders show their value.
 - While you use the controller, the options screens show `B` as the back button instead of `ESC`.
 
@@ -25,9 +26,8 @@ IW-Pad has two files:
 | `iw-pad.exe` | The launcher. It starts the game and loads `iw-pad.dll` into it. |
 | `iw-pad.dll` | The mod. It changes some function calls in the game memory. |
 
-IW-Pad does not change the game files on disk.
-IW-Pad operates only when you start the game through `iw-pad.exe`.
-If you start the game normally, the game does not change.
+Nothing on disk changes, and IW-Pad only runs when you start the game through `iw-pad.exe`.
+Started normally, the game is unmodified.
 
 The DLL identifies the game build before it changes anything.
 If the build is not supported, the DLL writes a message to `iw-pad.log` and does nothing.
@@ -36,22 +36,20 @@ If the build is not supported, the DLL writes a message to `iw-pad.log` and does
 
 | Version | MW2 | MW3 |
 |---|---|---|
-| x64 (Steam) | ✅ Works | ✅ Works |
-| x86 (32-bit) | ✅ Works | ✅ Works |
+| x64 (Steam) | Works | Works |
+| x86 (32-bit) | Works | Works |
 
 > [!WARNING]
-> The x64 Steam games do not repair the remote code execution (RCE) vulnerabilities in SP mode. This includes Special Ops.
-> The AlterWare clients (iw4x-sp and iw5-mod) also do not repair these vulnerabilities.
-> IW-Pad does not repair them.
-> Do not play online with these builds. Use them offline only.
-> At this time, no client makes MW2 SP or MW3 SP safe to play online in Special Ops.
+> SP mode, including Special Ops, still has its remote code execution (RCE) vulnerabilities in the x64 Steam games.
+> Neither the AlterWare clients (iw4x-sp and iw5-mod) nor IW-Pad fix them, and no client currently makes MW2 or MW3
+> Special Ops safe online. Play these builds offline only.
 
-The 32-bit version can require [AlterWare](https://alterware.dev) (iw4x-sp for MW2, iw5-mod for MW3).
+The 32-bit games may need [AlterWare](https://alterware.dev) (iw4x-sp for MW2, iw5-mod for MW3).
 
 ## Install
 
-1. From the latest release, download the zip that agrees with your game:
-   - `iw-pad-x64.zip`: for the current Steam games. Most players must use this zip.
+1. From the latest release, download the zip that matches your game:
+   - `iw-pad-x64.zip`: for the current Steam games. Most players need this one.
    - `iw-pad-x86.zip`: for 32-bit games and AlterWare.
 2. Extract `iw-pad.exe` and `iw-pad.dll` into the game folder, next to `iw4sp.exe` or `iw5sp.exe`.
 3. In Steam, open the game properties. Set the launch option:
@@ -82,7 +80,7 @@ If the folder has `iw4x-sp.exe` or `iw5-mod.exe`, the launcher starts that file 
 | Back | Objectives / scores |
 | Start | Pause menu |
 
-IW-Pad applies these binds one time, only if no controller button has a bind.
+IW-Pad sets these binds once, and only if no controller button has a bind yet.
 The game then saves the binds to `config.cfg`. If you change a bind, the game keeps your change.
 Buttons use the console names, for example `bind BUTTON_A "+gostand"` or `bind DPAD_UP "+actionslot 1"`.
 
@@ -97,12 +95,14 @@ Open **Options > Controls > Look**. The controller settings are below the mouse 
 | Aim Assist | `gpad_aim_assist` | Yes / No |
 | Aim Assist Strength | `gpad_aim_strength` | `0%` to `100%`. `100%` is the console strength. Default `75%`. |
 | Stick Deadzone | `gpad_deadzone` | `0%` to `90%`. Default `20%`, the same as the console. |
+| PlayStation Icons | `gpad_ps_glyphs` | Yes / No. No shows Xbox 360 buttons. |
+| Console Style HUD | `gpad_console_hud` | Yes / No. Default Yes. |
 | Enable Controller | `gpad_enabled` | Yes / No |
 | Reset Controller Settings | | Press `A` to set all the rows above back to their defaults. |
 
 Use the D-pad or stick to move between rows. Press left or right to change a slider. The value shows next to the slider.
 Press `A` to change a Yes/No row.
-If you set Enable Controller to No, the controller stops working, also in the menus. Use the mouse or keyboard to set it back.
+If you set Enable Controller to No, the controller stops working, menus included. Use the mouse or keyboard to set it back.
 
 Controller Sensitivity uses the console Look Sensitivity steps (read from MW3; MW2 has the same Low, Medium, High and top values):
 
@@ -122,6 +122,9 @@ You can also set these values in the game console (`~`) or in `config.cfg`.
 | `gpad_sensitivity` | `1.0` | Look sensitivity. See the steps above. |
 | `gpad_invert` | `0` | Inverts the vertical look. |
 | `gpad_deadzone` | `0.2` | Stick deadzone. |
+| `gpad_ps_glyphs` | `0` | `1` shows PlayStation 3 button icons, `0` Xbox 360. |
+| `gpad_console_hud` | `1` | Console style HUD: safe area, D-pad in the compass. |
+| `gpad_hud_safe_area` | `0.9` | Console Style HUD only. Part of the screen the HUD uses (`1` = screen edges). |
 | `gpad_aim_range` | `3200` | MW3 only. Aim assist range. |
 | `gpad_autoaim_range` | `1200` | MW3 only. Auto aim range. |
 | `gpad_reset` | `0` | Set to `1` to reset the settings above to their defaults. It goes back to `0`. |
@@ -154,11 +157,11 @@ The launcher must have the same bitness as the game.
 
 - [IW4x](https://github.com/iw4x/iw4x-client): the aim assist logic is ported from `Controller/Engine/View.cpp`.
 - [iw3sp_mod](https://github.com/ahrimd0n/iw3sp-mod): the controller and aim assist logic is ported from `Gamepad.cpp`.
-- [AlterWare](https://alterware.dev): iw4x-sp (MW2) and iw5-mod (MW3). IW-Pad operates with these clients on 32-bit installs. We used the iw4x-sp symbols to find the game addresses.
+- [AlterWare](https://alterware.dev): iw4x-sp (MW2) and iw5-mod (MW3). IW-Pad works with these clients on 32-bit installs. We used the iw4x-sp symbols to find the game addresses.
 - [llvm-mingw](https://github.com/mstorsjo/llvm-mingw), [Ghidra](https://ghidra-sre.org) and [Capstone](https://www.capstone-engine.org): build and analysis tools.
 
 ## License
 
-GPL-3.0. Refer to `LICENSE`.
+GPL-3.0. See `LICENSE`.
 
 IW-Pad is not related to Activision or Infinity Ward. You must have a legal copy of the game.
