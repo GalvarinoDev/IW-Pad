@@ -4,7 +4,7 @@
 set -e
 cd "$(dirname "$0")"
 BIN=$(ls -d "$HOME"/tools/llvm-mingw-*/bin | head -1)
-FLAGS="-std=c++20 -O2 -Wall -Wno-c23-extensions -static"
+FLAGS="-std=c++20 -O2 -Wall -Wno-c23-extensions -static -s"
 mkdir -p build/x86
 for arch in x86_64 i686; do
   out=build; [ $arch = i686 ] && out=build/x86
