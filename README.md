@@ -8,8 +8,8 @@ It works on Windows and on Linux with Proton. It was made for the Steam Deck.
 
 | Game | Version |
 |---|---|
-| Call of Duty 1 (2003) | 1.1 and 1.5 (Steam) |
-| Call of Duty 1: United Offensive (2004) | 1.41 (Steam) |
+| Call of Duty 1 (2003) | 1.1 and 1.5 (Steam and Deluxe Edition) |
+| Call of Duty 1: United Offensive (2004) | 1.41 (Steam and Deluxe Edition) |
 | Call of Duty 2 (2005) | 1.3 (Steam) |
 | Modern Warfare 2 (2009) | 64-bit and 32-bit (32-bit needs AlterWare iw4x-sp) |
 | Modern Warfare 3 (2011) | 64-bit and 32-bit (32-bit needs AlterWare iw5-mod) |
@@ -30,7 +30,7 @@ IW-Pad works only with these versions.
 
 1. Download `iw-pad.zip` from the latest release.
 2. Extract `iw-pad.exe`, `iw-pad.dll` and `iw-pad32.dll` into the game folder, next to the game exe.
-3. Call of Duty 1, Call of Duty 1: United Offensive and Call of Duty 2 only. Copy the menu file from the `classic` folder:
+3. For Call of Duty 1, Call of Duty 1: United Offensive and Call of Duty 2, also copy the menu file from the `classic` folder:
 
    | Game | File | Copy to |
    |---|---|---|
@@ -50,8 +50,9 @@ IW-Pad works only with these versions.
 
 5. In Steam Input, use a gamepad layout, not a keyboard and mouse layout.
 
-On Steam, Call of Duty 1 and Call of Duty 1: United Offensive share one game folder. Copy the files there once.
-The Call of Duty 1 launch option sets `IWPAD_EXE=CoDSP.exe` so the launcher starts Call of Duty 1 even when United Offensive is in the same folder (Steam, Deluxe Edition or disc). Without it, the launcher picks United Offensive unless Steam runs the game as Call of Duty 1.
+Steam and Deluxe Edition keep Call of Duty 1 and Call of Duty 1: United Offensive in one game folder. Copy the files there once.
+The Call of Duty 1 launch option sets `IWPAD_EXE=CoDSP.exe` so the launcher starts Call of Duty 1 even when United Offensive is in the same folder. Without it, the launcher picks United Offensive unless Steam runs the game as Call of Duty 1.
+For Deluxe Edition, add `CoDSP.exe` and `CoDUOSP.exe` to Steam as non-Steam games and set the launch options above on those shortcuts.
 
 For 32-bit MW2 and MW3, put AlterWare `iw4x-sp.exe` or `iw5-mod.exe` in the game folder too. The launcher starts it.
 

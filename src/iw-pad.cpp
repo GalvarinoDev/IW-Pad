@@ -576,7 +576,8 @@ constexpr Game kGames[] = {
     .aaGlob = 0, .aaGraphs = 0, .aaShift = 0, .aaAutoMeleeState = 0xE58, .aaLockOnTarget = 0xE70,
     .aimDvarSlots = nullptr, .mw3Regs = false, .drawText = 0, .dvarValue = 0x1c, .useHoldTime = 0,
     .q3 = &kCod1, .keyCatchUi = 2, .noLookMask = 0x4000, .cvarGet = 0x4319e0, .cvarSet = 0x431ce0, .keyNameCount = 128 },
-  // CoD1 SP 1.5 (PE 2004-03-02). Steam exe (packed) and the SafeDisc CD exe. Both decrypt to the same code.
+  // CoD1 SP 1.5 (PE 2004-03-02). Steam exe (packed) and the SafeDisc CD exe. Both decrypt to the same code. Deluxe
+  // Edition's unprotected exe (image size 0x146389e) has the same code and constant data as the unpacked Steam image.
   { .name = "CoD SP 1.5 (CoDSP.exe)", .timestamp = 0x40443fda, .imageSize = 0x1467000,
     .callMouseMove = 0x40af90, .mouseMove = 0x40aa10, .callEventLoop = {0x4307a0, 0x430854}, .eventLoop = 0x42f180,
     .keyEvent = 0x40d000, .cbuf = 0x4209d0, .sysMilliseconds = 0x452f10, .keynumToString = 0,
@@ -586,7 +587,7 @@ constexpr Game kGames[] = {
     .bindCommands = 0, .localizedKeyNames = 0x56ea00, .hintCalls = {}, .hintFunc = 0, .hintIsGetKeyBinding = false,
     .aaGlob = 0, .aaGraphs = 0, .aaShift = 0, .aaAutoMeleeState = 0xE58, .aaLockOnTarget = 0xE70,
     .aimDvarSlots = nullptr, .mw3Regs = false, .drawText = 0, .dvarValue = 0x1c, .useHoldTime = 0,
-    .q3 = &kCod1_15, .keyCatchUi = 2, .noLookMask = 0x4000, .altIds = {{0x40443fda, 0x146b000}}, .cvarGet = 0x4319f0, .cvarSet = 0x431cf0, .keyNameCount = 128 },
+    .q3 = &kCod1_15, .keyCatchUi = 2, .noLookMask = 0x4000, .altIds = {{0x40443fda, 0x146b000}, {0x40443fda, 0x146389e}}, .cvarGet = 0x4319f0, .cvarSet = 0x431cf0, .keyNameCount = 128 },
 #endif
 };
 const Game* g;
