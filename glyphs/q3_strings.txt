@@ -1,0 +1,89 @@
+# Console wording for CoD1 / UO on-screen text (English). Like CoD2 (padText in iw-pad.cpp), the DLL swaps these in
+# its text draw hook only while the pad is in use, so keyboard players keep the stock text. The game's original line
+# is found by REFERENCE. "main" = CoD1 base files (Main/, also read by UO), "uo" = UO's own (uo/).
+# [%s] is filled by the game with the bound key (our button icon); [{cmd}] = the pad button bound to cmd.
+# glyphs/q3_text.py turns this into src/q3_text.inc (original English line -> replacement).
+# format: where|file|REFERENCE|new text
+
+# --- start / skip screens ("Click to Start the Mission", "Press FIRE to Skip."): pad_prompt in iw-pad.cpp, like CoD2
+# ("Press [A] ..."; A sends MOUSE1 while one is drawn)
+
+# --- movement / look (training)
+main|script.str|HINT_MOVEFORWARD|Push the left stick forward to move forward.
+main|script.str|HINT_MOVEBACKWARD|Pull the left stick back to move backwards.
+main|script.str|HINT_STRAFELEFT|Push the left stick left to move left.
+main|script.str|HINT_STRAFERIGHT|Push the left stick right to move right.
+uo|gmi_script.str|HINT_MOVEFORWARD|Push the left stick forward to move forward.
+uo|gmi_script.str|HINT_MOVEBACKWARD|Pull the left stick back to move backwards.
+uo|gmi_script.str|HINT_STRAFELEFT|Push the left stick left to move left.
+uo|gmi_script.str|HINT_STRAFERIGHT|Push the left stick right to move right.
+main|training.str|FIVESIGNS|Use the right stick to look at the five large signs.
+main|tankdrivecountry.str|PRESSMOVEME|Use the left stick to move and turn the tank.
+main|tankdrivecountry.str|PRESSTHEFORWARDBUTTON|Push the left stick forward to move the tank forward
+main|tankdrivecountry.str|PRESSTHEBACKBUTTON|Pull the left stick back to move the tank backwards
+main|tankdrivecountry.str|PRESSTHESTRAFERIGHT|Push the left stick right to turn the tank right
+main|tankdrivecountry.str|PRESSTHESTRAFELEFT|Push the left stick left to turn the tank left
+
+# --- stance: tap B crouch, hold B prone, A stand (no double taps, no holding to stay crouched)
+main|script.str|HINT_DOUBLETAPPRONEKEY|Hold [%s] to go prone
+main|script.str|HINT_HOLDDOWNPRONEKEY|Hold [%s] to go prone
+main|script.str|HINT_DOUBLETAPSTANDKEY|Press [%s] to stand from prone
+main|script.str|HINT_HOLDDOWNCROUCHKEY|Press [%s] to crouch.
+main|script.str|HINT_STANDLETGOCROUCHKEY|Press [%s] again to stop crouching.
+main|script.str|HINT_STANDLETGOSECONDKEY|Press [%s] to stand up.
+main|script.str|HINT_STANDFROMCROUCHKEY|Press [%s] to stand up from crouch.
+main|script.str|HINT_RAISEFROMCROUCHTOSTAND|Press [%s] to stand from crouch.
+main|script.str|HINT_STANDLETGOPRONEKEY|Press [%s] to come out of prone.
+main|script.str|HINT_RAISEFROMPRONETOCROUCH|Press [%s] to rise from prone to crouch.
+uo|gmi_script.str|HINT_DOUBLETAPPRONEKEY|Hold [%s] to go prone
+uo|gmi_script.str|HINT_HOLDDOWNPRONEKEY|Hold [%s] to go prone
+uo|gmi_script.str|HINT_DOUBLETAPSTANDKEY|Press [%s] to stand from prone
+uo|gmi_script.str|HINT_HOLDDOWNCROUCHKEY|Press [%s] to crouch.
+uo|gmi_script.str|HINT_STANDLETGOCROUCHKEY|Press [%s] again to stop crouching.
+uo|gmi_script.str|HINT_STANDLETGOSECONDKEY|Press [%s] to stand up.
+uo|gmi_script.str|HINT_STANDFROMCROUCHKEY|Press [%s] to stand up from crouch.
+uo|gmi_script.str|HINT_RAISEFROMCROUCHTOSTAND|Press [%s] to stand from crouch.
+uo|gmi_script.str|HINT_STANDLETGOPRONEKEY|Press [%s] to come out of prone.
+uo|gmi_script.str|HINT_RAISEFROMPRONETOCROUCH|Press [%s] to rise from prone to crouch.
+main|cgame.str|STANCEHINT_PRONE|Hold [%s] to go prone
+uo|cgame.str|STANCEHINT_PRONE|Hold [%s] to go prone
+uo|gmi_sicily2.str|WHILE_RIDING_THE_BMW|While riding the BMW bike press [{+gostand}] to sit up and [{togglecrouch}] to sit down.
+
+# --- aiming: LT is held, not toggled
+main|script.str|HINT_ADSSTOP|Let go of [%s] to stop aiming down the sight.
+uo|gmi_script.str|HINT_ADSSTOP|Let go of [%s] to stop aiming down the sight.
+
+# --- "USE key" / "USE" / "FIRE" wording: the button icon says it
+main|cgame.str|SWAPWEAPONS|Hold [%s] to swap
+main|cgame.str|PICKUPHEALTH|Press [%s] to pick up health
+main|cgame.str|PICKUPNEWWEAPON|Hold [%s] to pick up the %s
+main|cgame.str|PICKUPAMMO|Press [%s] to pick up the %s ammo
+uo|cgame.str|SWAPWEAPONS|Hold [%s] to swap
+uo|cgame.str|PICKUPHEALTH|Press [%s] to pick up health
+uo|cgame.str|PICKUPNEWWEAPON|Hold [%s] to pick up the %s
+uo|cgame.str|PICKUPAMMO|Press [%s] to pick up the %s ammo
+main|script.str|HINT_LEANOUTWINDOW|Press [%s] to lean out of the window
+main|script.str|HINT_FIRSTOBJECTIVE|Look at your first objective and press [%s] to retrieve
+main|script.str|HINT_USEPRIVATEMILLS|To get Private Mills' attention, press [%s]
+main|script.str|HINT_USECINDERBLOCKWALL|Approach the cinder block wall and press [%s] to plant the explosives.
+main|script.str|HINT_SWAPWEAPONSKEY|Hold [%s] to swap your current weapon for another that you are looking at.
+main|script.str|HINT_PICKUPWEAPONKEY|To pick up a weapon, look at it and press [%s].
+main|script.str|HINT_PICKUPAMMOKEY|To pick up ammo from another weapon, walk close to it or look at it and press [%s].
+uo|gmi_script.str|HINT_LEANOUTWINDOW|Press [%s] to lean out of the window
+uo|gmi_script.str|HINT_FIRSTOBJECTIVE|Look at your first objective and press [%s] to retrieve
+uo|gmi_script.str|HINT_USEPRIVATEMILLS|To get Private Mills' attention, press [%s]
+uo|gmi_script.str|HINT_USECINDERBLOCKWALL|Approach the cinder block wall and press [%s] to plant the explosives.
+uo|gmi_script.str|HINT_SWAPWEAPONSKEY|Hold [%s] to swap your current weapon for another that you are looking at.
+uo|gmi_script.str|HINT_PICKUPWEAPONKEY|To pick up a weapon, look at it and press [%s].
+uo|gmi_script.str|HINT_PICKUPAMMOKEY|To pick up ammo from another weapon, walk close to it or look at it and press [%s].
+main|brecourt.str|PICKUP_EXPLOSIVES|To pick up the explosives, press [%s]
+main|carride.str|HINT_GETINCAR|Press [%s] to get in the car.
+main|dawnville.str|PANZER|Press [%s] to swap your weapon for the Panzerfaust Anti-Tank Weapon.
+main|dawnville.str|CAR|Press [%s] to get into the car.
+main|dawnville.str|TEAMMATEMOVE|Press [%s] to make your teammate move.
+main|dawnville.str|NEWREF|Press [%s] to make your teammate move.
+main|pathfinder.str|BEACON|Press [%s] to set up the radio beacon.
+main|pathfinder.str|LEGBAG|Press [%s] to pick up the legbag.
+main|pathfinder.str|OBJECTIVEHINT|Press [%s] to see what your next objective is.
+uo|gmi_sicily1.str|GET_ON_BIKE|Press [{+activate}] to get on the motorcycle
+uo|gmi_sicily2.str|PRESS_USE_|Press [

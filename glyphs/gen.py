@@ -1,5 +1,5 @@
-# Packs the button icons into glyphs.bin for iw-pad.dll (#embed). The icons were drawn for the Plutonium WaW console
-# look and are used with the artist's permission (see glyphs/CREDITS.txt). Needs Pillow. Run after changing one.
+# Packs the button icons into glyphs.bin for iw-pad.dll (#embed). The icons are used
+# with the artist's permission (see glyphs/CREDITS.txt). Needs Pillow. Run after changing one.
 # Format, per set (Xbox 360, then PS3), per button in the DLL's Btn order A..START, then the whole d-pad (Console Style
 # HUD, drawn as big as the engine allows):
 #   u8 w, u8 h  -- icon size in the engine's text units: (lines * 32) + 16, so 0x30 = one text line

@@ -1,15 +1,13 @@
 #!/bin/sh
-# Builds iw-pad.dll + iw-pad.exe with llvm-mingw (https://github.com/mstorsjo/llvm-mingw):
-# build/ for the x64 games, build/x86/ for the 32-bit ones (the launcher must match the game's bitness).
+# Builds with llvm-mingw (https://github.com/mstorsjo/llvm-mingw) into build/: iw-pad.exe (x64, starts every game),
+# iw-pad.dll (x64 games) and iw-pad32.dll (32-bit games). A DLL must match the game's bitness; the exe does not.
 set -e
 cd "$(dirname "$0")"
 BIN=$(ls -d "$HOME"/tools/llvm-mingw-*/bin | head -1)
 FLAGS="-std=c++20 -O2 -Wall -Wno-c23-extensions -static -s"
-mkdir -p build/x86
-for arch in x86_64 i686; do
-  out=build; [ $arch = i686 ] && out=build/x86
-  CXX=$BIN/$arch-w64-mingw32-clang++
-  "$CXX" $FLAGS -shared -o $out/iw-pad.dll src/iw-pad.cpp -lwinmm
-  "$CXX" $FLAGS -mwindows -municode -o $out/iw-pad.exe src/iw-pad-launcher.cpp
-done
-ls -la build build/x86
+mkdir -p build
+"$BIN/x86_64-w64-mingw32-clang++" $FLAGS -shared -o build/iw-pad.dll src/iw-pad.cpp -lwinmm
+"$BIN/i686-w64-mingw32-clang++" $FLAGS -shared -o build/iw-pad32.dll src/iw-pad.cpp -lwinmm
+"$BIN/x86_64-w64-mingw32-clang++" $FLAGS -mwindows -municode -o build/iw-pad.exe src/iw-pad-launcher.cpp -lpsapi
+rm -f build/iw-pad32.exe
+ls -la build/iw-pad*

@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="600" viewBox="0 0 1280 600" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif" font-size="16">
+<title>Call of Duty 1 and United Offensive controls</title>
+<rect width="1280" height="600" rx="18" fill="#f3f4f6"/>
+<text x="36" y="50" font-size="22" font-weight="700" fill="#1f2328">Call of Duty 1 and United Offensive</text>
+<defs>
+<linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b3d42"/><stop offset="0.55" stop-color="#2a2c30"/><stop offset="1" stop-color="#1c1d20"/></linearGradient>
+<radialGradient id="sheen" cx="0.5" cy="0.15" r="0.6"><stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+<radialGradient id="cap" cx="0.42" cy="0.35" r="0.75"><stop offset="0" stop-color="#4a4d52"/><stop offset="1" stop-color="#232529"/></radialGradient>
+<radialGradient id="btn" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#2e3034"/><stop offset="1" stop-color="#121315"/></radialGradient>
+<linearGradient id="cross" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#43464b"/><stop offset="1" stop-color="#26282b"/></linearGradient>
+<filter id="shadow" x="-20%" y="-20%" width="140%" height="160%"><feGaussianBlur stdDeviation="9"/></filter>
+</defs>
+<g transform="translate(265 -45) scale(1.25)">
+<ellipse cx="300" cy="458" rx="215" ry="16" fill="#000" opacity="0.22" filter="url(#shadow)"/>
+<path d="M300 147 C255 147 228 146 205 138 C178 137 150 150 132 180 C118 207 95 265 80 320 C70 355 66 395 72 425 C78 450 95 462 112 460 C140 445 165 410 190 383 C205 372 225 370 250 370 C270 370 290 370 300 370 C310 370 330 370 350 370 C375 370 395 372 410 383 C435 410 460 445 488 460 C505 462 522 450 528 425 C534 395 530 355 520 320 C505 265 482 207 468 180 C450 150 422 137 395 138 C372 146 345 147 300 147 Z" fill="url(#body)" stroke="#121315" stroke-width="2"/>
+<path d="M300 147 C255 147 228 146 205 138 C178 137 150 150 132 180 C118 207 95 265 80 320 C70 355 66 395 72 425 C78 450 95 462 112 460 C140 445 165 410 190 383 C205 372 225 370 250 370 C270 370 290 370 300 370 C310 370 330 370 350 370 C375 370 395 372 410 383 C435 410 460 445 488 460 C505 462 522 450 528 425 C534 395 530 355 520 320 C505 265 482 207 468 180 C450 150 422 137 395 138 C372 146 345 147 300 147 Z" fill="url(#sheen)"/>
+<circle cx="180" cy="227" r="35" fill="#141517"/>
+<circle cx="180" cy="227" r="28" fill="url(#cap)"/>
+<circle cx="180" cy="227" r="20" fill="#2a2c30" stroke="#3c3f44" stroke-width="1.2"/>
+<path d="M166 213 A20 20 0 0 1 194 213" fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="2"/>
+<circle cx="361" cy="298" r="35" fill="#141517"/>
+<circle cx="361" cy="298" r="28" fill="url(#cap)"/>
+<circle cx="361" cy="298" r="20" fill="#2a2c30" stroke="#3c3f44" stroke-width="1.2"/>
+<path d="M347 284 A20 20 0 0 1 375 284" fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="2"/>
+<circle cx="238" cy="303" r="35" fill="#141517"/>
+<path d="M229 273 h18 q4 0 4 4 v17 h17 q4 0 4 4 v18 q0 4 -4 4 h-17 v17 q0 4 -4 4 h-18 q-4 0 -4 -4 v-17 h-17 q-4 0 -4 -4 v-18 q0 -4 4 -4 h17 v-17 q0 -4 4 -4 Z" fill="url(#cross)" stroke="#1b1c1f" stroke-width="1"/>
+<circle cx="238" cy="303" r="6" fill="#222427"/>
+<circle cx="300" cy="180" r="17" fill="#26282b" stroke="#141517" stroke-width="2"/>
+<circle cx="300" cy="180" r="11" fill="#3a3d42"/>
+<circle cx="266" cy="226" r="8.5" fill="url(#btn)" stroke="#0e0f10" stroke-width="1"/>
+<circle cx="334" cy="226" r="8.5" fill="url(#btn)" stroke="#0e0f10" stroke-width="1"/>
+<rect x="261.5" y="222.5" width="6" height="5" rx="1" fill="none" stroke="#9aa0a6" stroke-width="0.9"/><rect x="264.5" y="224.5" width="6" height="5" rx="1" fill="none" stroke="#9aa0a6" stroke-width="0.9"/>
+<path d="M330 223 h8 M330 226 h8 M330 229 h8" stroke="#9aa0a6" stroke-width="1"/>
+<rect x="292" y="243.5" width="16" height="11" rx="4" fill="url(#btn)" stroke="#0e0f10" stroke-width="1"/><path d="M300 252 v-5 M297.5 249 l2.5 -2.5 l2.5 2.5" fill="none" stroke="#9aa0a6" stroke-width="0.9"/>
+<circle cx="419" cy="196" r="15.5" fill="url(#btn)" stroke="#0b0c0d" stroke-width="1"/>
+<ellipse cx="419" cy="189" rx="9" ry="4.5" fill="#ffffff" opacity="0.08"/>
+<text x="419" y="201.5" text-anchor="middle" font-size="15.5" font-weight="700" fill="#f2c230">Y</text>
+<circle cx="451" cy="230" r="15.5" fill="url(#btn)" stroke="#0b0c0d" stroke-width="1"/>
+<ellipse cx="451" cy="223" rx="9" ry="4.5" fill="#ffffff" opacity="0.08"/>
+<text x="451" y="235.5" text-anchor="middle" font-size="15.5" font-weight="700" fill="#e5483d">B</text>
+<circle cx="420" cy="260" r="15.5" fill="url(#btn)" stroke="#0b0c0d" stroke-width="1"/>
+<ellipse cx="420" cy="253" rx="9" ry="4.5" fill="#ffffff" opacity="0.08"/>
+<text x="420" y="265.5" text-anchor="middle" font-size="15.5" font-weight="700" fill="#5cbf4a">A</text>
+<circle cx="388" cy="227" r="15.5" fill="url(#btn)" stroke="#0b0c0d" stroke-width="1"/>
+<ellipse cx="388" cy="220" rx="9" ry="4.5" fill="#ffffff" opacity="0.08"/>
+<text x="388" y="232.5" text-anchor="middle" font-size="15.5" font-weight="700" fill="#3b8fe6">X</text>
+</g>
+<path d="M338 91.0 H356 L483.8 130.0" stroke="#8c959f" stroke-width="1.4" fill="none"/>
+<rect x="297.6" y="79" width="32.4" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="313.8" y="95" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">LT</text>
+<text x="288.6" y="96" text-anchor="end" fill="#1f2328">Aim down sights</text>
+<circle cx="483.8" cy="130.0" r="4.5" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<path d="M338 155.0 H356 L432.5 176.2" stroke="#8c959f" stroke-width="1.4" fill="none"/>
+<rect x="297.6" y="143" width="32.4" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="313.8" y="159" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">LB</text>
+<text x="288.6" y="160" text-anchor="end" fill="#1f2328">Previous weapon</text>
+<circle cx="432.5" cy="176.2" r="4.5" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<path d="M338 248.0 H356 L452.5 238.8" stroke="#8c959f" stroke-width="1.4" fill="none"/>
+<rect x="297.6" y="221" width="32.4" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="313.8" y="237" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">LS</text>
+<text x="288.6" y="238" text-anchor="end" fill="#1f2328">Move</text>
+<rect x="297.6" y="251" width="32.4" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="313.8" y="267" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">L3</text>
+<text x="288.6" y="268" text-anchor="end" fill="#1f2328">Sprint (United Offensive)</text>
+<circle cx="452.5" cy="238.8" r="4.5" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<path d="M338 378.0 H356 L518.8 333.8" stroke="#8c959f" stroke-width="1.4" fill="none"/>
+<rect x="305.8" y="321" width="24.2" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="317.90000000000003" y="337" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">↑</text>
+<text x="296.8" y="338" text-anchor="end" fill="#1f2328">Pistol</text>
+<rect x="305.8" y="351" width="24.2" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="317.90000000000003" y="367" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">↓</text>
+<text x="296.8" y="368" text-anchor="end" fill="#1f2328">Alternate weapon mode</text>
+<rect x="305.8" y="381" width="24.2" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="317.90000000000003" y="397" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">←</text>
+<text x="296.8" y="398" text-anchor="end" fill="#1f2328">Lean left</text>
+<rect x="305.8" y="411" width="24.2" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="317.90000000000003" y="427" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">→</text>
+<text x="296.8" y="428" text-anchor="end" fill="#1f2328">Lean right</text>
+<circle cx="518.8" cy="333.8" r="4.5" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<path d="M603.6 88 L597.5 226.2" stroke="#8c959f" stroke-width="1.4" fill="none"/>
+<rect x="579.2" y="65" width="48.8" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="603.6" y="81" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">Back</text>
+<text x="570.2" y="82" text-anchor="end" fill="#1f2328">Scores</text>
+<circle cx="597.5" cy="226.2" r="4.5" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<path d="M680.5 88 L682.5 226.2" stroke="#8c959f" stroke-width="1.4" fill="none"/>
+<rect x="652" y="65" width="57.0" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="680.5" y="81" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">Start</text>
+<text x="718.0" y="82" text-anchor="start" fill="#1f2328">Pause menu</text>
+<circle cx="682.5" cy="226.2" r="4.5" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<path d="M942 91.0 H924 L796.2 130.0" stroke="#8c959f" stroke-width="1.4" fill="none"/>
+<rect x="950" y="79" width="32.4" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="966.2" y="95" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">RT</text>
+<text x="991.4" y="96" text-anchor="start" fill="#1f2328">Fire</text>
+<circle cx="796.2" cy="130.0" r="4.5" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<path d="M942 155.0 H924 L847.5 176.2" stroke="#8c959f" stroke-width="1.4" fill="none"/>
+<rect x="950" y="143" width="32.4" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="966.2" y="159" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">RB</text>
+<text x="991.4" y="160" text-anchor="start" fill="#1f2328">Frag grenade</text>
+<circle cx="847.5" cy="176.2" r="4.5" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<path d="M942 258.5 H924 L847.5 242.5" stroke="#8c959f" stroke-width="1.4" fill="none"/>
+<circle cx="962" cy="215" r="11.5" fill="#2b2d31"/>
+<text x="962" y="220" text-anchor="middle" font-size="13" font-weight="700" fill="#f2c230">Y</text>
+<text x="983" y="220" text-anchor="start" fill="#1f2328">Next weapon</text>
+<circle cx="962" cy="244" r="11.5" fill="#2b2d31"/>
+<text x="962" y="249" text-anchor="middle" font-size="13" font-weight="700" fill="#e5483d">B</text>
+<text x="983" y="249" text-anchor="start" fill="#1f2328">Crouch (tap), prone (hold)</text>
+<circle cx="962" cy="273" r="11.5" fill="#2b2d31"/>
+<text x="962" y="278" text-anchor="middle" font-size="13" font-weight="700" fill="#5cbf4a">A</text>
+<text x="983" y="278" text-anchor="start" fill="#1f2328">Jump</text>
+<circle cx="962" cy="302" r="11.5" fill="#2b2d31"/>
+<text x="962" y="307" text-anchor="middle" font-size="13" font-weight="700" fill="#3b8fe6">X</text>
+<text x="983" y="307" text-anchor="start" fill="#1f2328">Reload (tap), use (hold)</text>
+<circle cx="847.5" cy="242.5" r="4.5" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<path d="M942 366.0 H924 L753.8 327.5" stroke="#8c959f" stroke-width="1.4" fill="none"/>
+<rect x="950" y="339" width="32.4" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="966.2" y="355" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">RS</text>
+<text x="991.4" y="356" text-anchor="start" fill="#1f2328">Look</text>
+<rect x="950" y="369" width="32.4" height="23" rx="11.5" fill="#2b2d31"/>
+<text x="966.2" y="385" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">R3</text>
+<text x="991.4" y="386" text-anchor="start" fill="#1f2328">Melee</text>
+<circle cx="753.8" cy="327.5" r="4.5" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+</svg>
