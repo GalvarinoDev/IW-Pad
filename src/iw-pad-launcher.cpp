@@ -6,7 +6,8 @@
 //   MW3: bash -c 'exec "${@/iw5sp.exe/iw-pad.exe}"' -- %command%
 //   CoD2: bash -c 'exec "${@/CoD2SP_s.exe/iw-pad.exe}"' -- %command%
 //   CoD UO: MESA_EXTENSION_MAX_YEAR=2003 bash -c 'exec "${@/CoDUOSP.exe/iw-pad.exe}"' -- %command%
-//   CoD: MESA_EXTENSION_MAX_YEAR=2003 bash -c 'exec "${@/CoDSP.exe/iw-pad.exe}"' -- %command%
+//   CoD: MESA_EXTENSION_MAX_YEAR=2003 IWPAD_EXE=CoDSP.exe bash -c 'exec "${@/CoDSP.exe/iw-pad.exe}"' -- %command%
+// IWPAD_EXE is optional and names the game exe to start from this folder, e.g. CoDSP.exe when CoDUOSP.exe is there too.
 #include <windows.h>
 #include <psapi.h>
 #include <cstring>
@@ -69,6 +70,9 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
   } else if (exists(L"iw5-mod.exe")) {
     exe = dir + L"iw5-mod.exe";
     mode = L" -singleplayer";
+  } else if (wchar_t pick[64] = {}; GetEnvironmentVariableW(L"IWPAD_EXE", pick, 64) - 1u < 63u && !wcspbrk(pick, L"\\/:") &&
+             !wcsstr(pick, L"..") && exists(pick)) {
+    exe = dir + pick;  // a plain file name in this folder; anything else falls through to the checks below
   } else if (wchar_t app[16] = {}; exists(L"CoDSP.exe") && GetEnvironmentVariableW(L"SteamAppId", app, 16) && !wcscmp(app, L"2620")) {
     exe = dir + L"CoDSP.exe";  // Steam installs CoD1 (2620) and UO (2640) in one folder: Steam's app id picks the game
   } else if (exists(L"CoDUOSP.exe")) {
@@ -103,7 +107,9 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
   PROCESS_INFORMATION pi{};
   // r_vidModes: UO 0x57b4a8, CoD1 1.1 0x563a28, CoD1 1.5 0x564a28 (same 13 modes). Each candidate is checked against
   // the stock entries before writing, so only the one matching this build gets patched.
-  const bool uo = exe.ends_with(L"CoDUOSP.exe"), cod1 = !uo && exe.ends_with(L"CoDSP.exe");
+  std::wstring lower = exe;
+  CharLowerW(lower.data());  // IWPAD_EXE may be spelled in any case
+  const bool uo = lower.ends_with(L"coduosp.exe"), cod1 = !uo && lower.ends_with(L"codsp.exe");
   if (!CreateProcessW(exe.c_str(), cmd.data(), nullptr, nullptr, FALSE, uo || cod1 ? CREATE_SUSPENDED : 0, nullptr, dir.c_str(), &si, &pi)) {
     fail(L"Starting the game");
     return 1;

@@ -42,7 +42,7 @@ IW-Pad works only with these versions.
 
    | Game | Launch option |
    |---|---|
-   | Call of Duty 1 | `MESA_EXTENSION_MAX_YEAR=2003 bash -c 'exec "${@/CoDSP.exe/iw-pad.exe}"' -- %command%` |
+   | Call of Duty 1 | `MESA_EXTENSION_MAX_YEAR=2003 IWPAD_EXE=CoDSP.exe bash -c 'exec "${@/CoDSP.exe/iw-pad.exe}"' -- %command%` |
    | Call of Duty 1: United Offensive | `MESA_EXTENSION_MAX_YEAR=2003 bash -c 'exec "${@/CoDUOSP.exe/iw-pad.exe}"' -- %command%` |
    | Call of Duty 2 | `bash -c 'exec "${@/CoD2SP_s.exe/iw-pad.exe}"' -- %command%` |
    | MW2 | `bash -c 'exec "${@/iw4sp.exe/iw-pad.exe}"' -- %command%` |
@@ -51,6 +51,7 @@ IW-Pad works only with these versions.
 5. In Steam Input, use a gamepad layout, not a keyboard and mouse layout.
 
 On Steam, Call of Duty 1 and Call of Duty 1: United Offensive share one game folder. Copy the files there once.
+The Call of Duty 1 launch option sets `IWPAD_EXE=CoDSP.exe` so the launcher starts Call of Duty 1 even when United Offensive is in the same folder (Steam, Deluxe Edition or disc). Without it, the launcher picks United Offensive unless Steam runs the game as Call of Duty 1.
 
 For 32-bit MW2 and MW3, put AlterWare `iw4x-sp.exe` or `iw5-mod.exe` in the game folder too. The launcher starts it.
 
