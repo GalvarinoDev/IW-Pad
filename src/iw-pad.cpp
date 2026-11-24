@@ -320,10 +320,10 @@ struct Game {
   const struct Q3* q3 = nullptr;
   int keyCatchUi = 0x10;
   unsigned noLookMask = 0x800;                     // snapFlags bit that stops look (CL_MouseMove checks it)
-  DWORD altIds[2][2] = {};
+  DWORD altIds[2][2] = {};                         // the same code under other PE headers: {timestamp, image size}
   uintptr_t cvarGet = 0, cvarSet = 0;              // Q3 string cvars (CoD1/UO): Cvar_Get(name, str, flags), Cvar_Set(name, str, force);
                                                    // value float at dvarValue (+0x1c), integer at +0x20
-  int keyNameCount = 96;                           // key name table entries incl. the NULL end (localized table follows)                         // the same code under other PE headers: {timestamp, image size}
+  int keyNameCount = 96;                           // key name table entries incl. the NULL end (localized table follows)
 };
 
 // Quake 3 family aim data (all x86, all static addresses)
@@ -334,8 +334,8 @@ struct Q3 {
   int entSize, entType, entOrigin, entHealth, entActor, entSentient;  // gentity_t
   int actorEye, sentientTeam, etActor, wdAdsZoomFov;
   int psDeltaAngles;  // int[3] short angles: the view is cl.viewangles + these
-  uintptr_t cinematic, clsState;
-  uintptr_t uiCursorMat;  // the UI cursor's material handle ("ui/cursor"), drawn each UI frame  // CL_KeyEvent skips a video on a key < 128 when cinematic != 0 or state is 1 / 2
+  uintptr_t cinematic, clsState;  // CL_KeyEvent skips a video on a key < 128 when cinematic != 0 or state is 1 / 2
+  uintptr_t uiCursorMat;  // the UI cursor's material handle ("ui/cursor"), drawn each UI frame
   const char* const* binds;                        // default pad binds, in button order
   uintptr_t refDrawText, refTextWidth, refTextHeight, refStretchPic, refRegisterMaterial;  // refexport_t slots
   uintptr_t uiDc;                                  // UI displayContext: cursor x/y ints +0xc/+0x10, menuStack +0x130,
@@ -2337,8 +2337,16 @@ void hk_CL_MouseMove(uint8_t* cmd, float frametime) {
 
   auto clamp_move = [](int v) { return v > 127 ? 127 : v < -127 ? -127 : v; };
   auto fwd = reinterpret_cast<int8_t*>(cmd + g->cmdForward), right = fwd + 1;
-  *fwd = int8_t(clamp_move(*fwd + int(std::lround(pad.ly * 127))));
-  *right = int8_t(clamp_move(*right + int(std::lround(pad.lx * 127))));
+  float lx = pad.lx, ly = pad.ly;
+  // Quake 3 family vehicles (CoD1 gamex86 0x2003b030, same code in UO) read only the sign of forwardmove/rightmove,
+  // so any sideways drift on a forward push turns the tank at full rate. Snap the stick to an axis within ~20 degrees.
+  if (g->q3) {
+    constexpr float kSnap = 0.364f;  // tan(20 deg)
+    if (std::fabs(lx) < std::fabs(ly) * kSnap) lx = 0;
+    else if (std::fabs(ly) < std::fabs(lx) * kSnap) ly = 0;
+  }
+  *fwd = int8_t(clamp_move(*fwd + int(std::lround(ly * 127))));
+  *right = int8_t(clamp_move(*right + int(std::lround(lx * 127))));
 
   // MW3 vehicles steered by script (Hunter Killer DPV) read getnormalizedcameramovement: usercmd bytes cmdForward + 4
   // (pitch, + = down) and + 5 (yaw, + = right). CL_MouseMove fills them from the mouse while snapFlags+4 has 0x40000
